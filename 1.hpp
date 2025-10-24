@@ -15,3 +15,19 @@ public:
         const std::vector<float>& y,
         int epochs);
 };
+
+
+
+// class LinearModel {
+
+//     std::vector<float> x;
+//     float bias;
+//     float learningRate;
+
+//     public :
+
+//     LinearModel(int inputSize, float lr=0.1);
+//     float predict(const std::vector<float>& x);
+//     void train (const std::vector<std::vector<float>>& X, const std::vector<float>& y, int epochs);
+
+// };
