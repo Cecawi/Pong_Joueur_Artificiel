@@ -49,10 +49,12 @@ float LinearModel::predict(const std::vector<float>& x)
 
 int main()
 {
-    //on va tester y = 2x + 1 (c'est le dataset)
+
+//////////on va tester y = 2x + 1
     std::cout << std::endl;
     std::cout << "Test pour y = 2x + 1 : " << std::endl;
-
+    
+    //dataset
     std::vector<std::vector<float>> X = { {1}, {2}, {3}, {4} };
     std::vector<float> y = { 3, 5, 7, 9 };
     
@@ -83,7 +85,7 @@ int main()
     std::cout << std::endl;
     std::cout << "OK" << std::endl;
 
-    //test de prédiction
+//////////test de prédiction
     std::vector<float> Xtest = {5.0f};
     std::cout << std::endl;
     std::cout << "L'information que pour x = 5, y = 11 n'ayant pas ete donnee, on va tester la prediction : " << std::endl;
@@ -92,7 +94,7 @@ int main()
     std::cout << std::endl;
     std::cout << "OK" << std::endl;
     
-    //on va tester avec le cas de test pour la regression linéaire simple 2D vu en cours
+//////////on va tester avec le cas de test pour la regression linéaire simple 2D vu en cours
     std::cout << std::endl;
     std::cout << "Lineaire simple 2D : " << std::endl;
     std::cout << "(Test pour y = x + 1)" << std::endl;
@@ -118,11 +120,12 @@ int main()
     std::cout << std::endl;
     std::cout << "OK" << std::endl;
 
-    //on va tester avec le cas de test pour la regression non linéaire simple 2D vu en cours
+//////////on va tester avec le cas de test pour la regression non linéaire simple 2D vu en cours
     std::cout << std::endl;
     std::cout << "Non lineaire simple 2D : " << std::endl;
     std::cout << "(Test pour y ~= -0.25*(x - 2)^2 + 3)" << std::endl;
     std::cout << "(Le modele lineaire ne peut qu'apprendre une droite approximative ici)" << std::endl;
+    std::cout << "(On pourra apprendre ce pattern non linéaire à un PMC (Perceptron Multicouche))" << std::endl;
 
     std::vector<std::vector<float>> XnonLineaire = { {1}, {2}, {3} };
     std::vector<float> YnonLineaire = { 2, 3, 2.5 };
@@ -153,7 +156,9 @@ int main()
     std::cout << std::endl;
     std::cout << "Moyen : le modele lineaire ne peut pas parfaitement ajuster les donnees, parce que la relation n est plus exactement une droite" << std::endl;
     std::cout << "(Il a trouve la meilleure approximation lineaire qui minimise l erreur)" << std::endl;
+    std::cout << "(Un PMC passera mieux ce test)" << std::endl;
 
+//////////
     std::cout << std::endl;
     std::cout << "Lineaire simple 3D : " << std::endl;
     std::cout << "(Test pour y = w1 * x1 + w2 * x2 + b)" << std::endl;
@@ -186,6 +191,7 @@ int main()
     std::cout << std::endl;
     std::cout << "OK" << std::endl;
 
+//////////
     std::cout << std::endl;
     std::cout << "Lineaire tricky 3D : " << std::endl;
     std::cout << "(Test pour y = a * x1 + b * x2 + c)" << std::endl;
@@ -219,8 +225,44 @@ int main()
 
     std::cout << std::endl;
     std::cout << "OK" << std::endl;
-    std::cout << std::endl;
 
+//////////
+    std::cout << std::endl;
+    std::cout << "Non lineaire simple 3D : " << std::endl;
+    std::cout << "(Test pour une relation non lineaire ou l interaction entre x1 et x2 change le signe de la sortie)" << std::endl;
+    std::cout << "(Aucune combinaison lineaire y = w1 * x1 + w2 * x2 + b)" << std::endl;
+    std::cout << "(Probleme XOR-like : sortie ne peut pas etre separee par un plan lineaire dans l espace (x1, x2))" << std::endl;
+    std::cout << "(Ce type de probleme ne peut pas etre resolu par un modele lineaire, il faut un PMC)" << std::endl;
+
+    std::vector<std::vector<float>> XnonLinear3D = { {1, 0}, {0, 1}, {1, 1}, {0, 0} };
+    std::vector<float> YnonLinear3D = { 2, 1, -2, -1 };
+
+    LinearModel modeleNonLinear3D(2, 0.01f);
+
+    modeleNonLinear3D.train(XnonLinear3D, YnonLinear3D, 1000);
+    std::cout << std::endl;
+    std::cout << "Entrainement avec : " << std::endl;
+    std::cout << "XnonLinear3D = { {1, 0}, {0, 1}, {1, 1}, {0, 0} }" << std::endl;
+    std::cout << "YnonLinear3D = { 2, 1, -2, -1 }" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Weights : " << modeleNonLinear3D.getWeights()[0] << ", "
+              << modeleNonLinear3D.getWeights()[1] << std::endl;
+    std::cout << "Bias : " << modeleNonLinear3D.getBias() << std::endl;
+
+    std::cout << std::endl;
+    for(size_t i = 0; i < XnonLinear3D.size(); ++i)
+    {
+        float pred = modeleNonLinear3D.predict(XnonLinear3D[i]);
+        std::cout << "x = (" << XnonLinear3D[i][0] << ", " << XnonLinear3D[i][1]
+                  << ") -> prediction = " << pred
+                  << " (y = " << YnonLinear3D[i] << ")" << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "KO : le modele lineaire ne parvient pas a reproduire la relation non lineaire" << std::endl;
+    std::cout << "(Un PMC avec une couche cachee pourra passer ce test)" << std::endl;
+    std::cout << std::endl;
 
     return 0;
 }
