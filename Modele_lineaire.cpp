@@ -95,6 +95,7 @@ int main()
     //on va tester avec le cas de test pour la regression linéaire simple 2D vu en cours
     std::cout << std::endl;
     std::cout << "Lineaire simple 2D : " << std::endl;
+    std::cout << "(Test pour y = x + 1)" << std::endl;
 
     std::vector<std::vector<float>> Xcours = { {1}, {2} };
     std::vector<float> Ycours = { 2, 3 };
@@ -120,6 +121,8 @@ int main()
     //on va tester avec le cas de test pour la regression non linéaire simple 2D vu en cours
     std::cout << std::endl;
     std::cout << "Non lineaire simple 2D : " << std::endl;
+    std::cout << "(Test pour y ~= -0.25*(x - 2)^2 + 3)" << std::endl;
+    std::cout << "(Le modele lineaire ne peut qu'apprendre une droite approximative ici)" << std::endl;
 
     std::vector<std::vector<float>> XnonLineaire = { {1}, {2}, {3} };
     std::vector<float> YnonLineaire = { 2, 3, 2.5 };
@@ -153,6 +156,7 @@ int main()
 
     std::cout << std::endl;
     std::cout << "Lineaire simple 3D : " << std::endl;
+    std::cout << "(Test pour y = w1 * x1 + w2 * x2 + b)" << std::endl;
 
     std::vector<std::vector<float>> X3D = { {1, 1}, {2, 2}, {3, 1} };
     std::vector<float> Y3D = { 2, 3, 2.5 };
@@ -181,7 +185,42 @@ int main()
 
     std::cout << std::endl;
     std::cout << "OK" << std::endl;
+
     std::cout << std::endl;
+    std::cout << "Lineaire tricky 3D : " << std::endl;
+    std::cout << "(Test pour y = a * x1 + b * x2 + c)" << std::endl;
+    std::cout << "(Ce cas est 'tricky' car x1 et x2 evoluent ensemble : le modele doit repartir correctement le poids entre eux (w1 ~ w2 ~ 0.5))" << std::endl;
+    std::cout << std::endl;
+
+    std::vector<std::vector<float>> Xtricky = { {1, 1}, {2, 2}, {3, 3} };
+    std::vector<float> Ytricky = { 1, 2, 3 };
+
+    LinearModel modeleTricky(2, 0.01f);
+
+    modeleTricky.train(Xtricky, Ytricky, 1000);
+    std::cout << std::endl;
+    std::cout << "Entrainement avec : " << std::endl;
+    std::cout << "Xtricky = { {1, 1}, {2, 2}, {3, 3} }" << std::endl;
+    std::cout << "Ytricky = { 1, 2, 3 }" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Weights : " << modeleTricky.getWeights()[0] << ", "
+              << modeleTricky.getWeights()[1] << " : OK (w1 ~ w2 ~ 0.5)" << std::endl;
+    std::cout << "Bias : " << modeleTricky.getBias() << std::endl;
+
+    std::cout << std::endl;
+    for(size_t i = 0 ; i < Xtricky.size() ; ++i)
+    {
+        float pred = modeleTricky.predict(Xtricky[i]);
+        std::cout << "x = (" << Xtricky[i][0] << ", " << Xtricky[i][1]
+                  << ") -> prediction = " << pred
+                  << " (y = " << Ytricky[i] << ")" << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "OK" << std::endl;
+    std::cout << std::endl;
+
 
     return 0;
 }
