@@ -61,6 +61,10 @@ int main()
 
     //entraînement du modèle (1000 "fois")
     model.train(X, y, 1000);
+    std::cout << std::endl;
+    std::cout << "Entrainement avec : " << std::endl;
+    std::cout << "X = { {1}, {2}, {3}, {4} }" << std::endl;
+    std::cout << "y = { 3, 5, 7, 9 }" << std::endl;
 
     //affichage des poids et du biais
     std::cout << std::endl;
@@ -70,28 +74,38 @@ int main()
     //affichage
     std::cout << std::endl;
     size_t i = 0;
-    for (auto& x : X)
+    for(auto& x : X)
     {
         std::cout << "x = " << x[0] << " -> prediction = " << model.predict(x) << " (y = " << y[i] << ")" << std::endl;
         i++;
     }
+
+    std::cout << std::endl;
+    std::cout << "OK" << std::endl;
 
     //test de prédiction
     std::vector<float> Xtest = {5.0f};
     std::cout << std::endl;
     std::cout << "L'information que pour x = 5, y = 11 n'ayant pas ete donnee, on va tester la prediction : " << std::endl;
     std::cout << "x = 5" << " -> prediction = " << model.predict(Xtest) << " (y = 11)" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "OK" << std::endl;
     
     //on va tester avec le cas de test pour la regression linéaire simple 2D vu en cours
     std::cout << std::endl;
     std::cout << "Lineaire simple 2D : " << std::endl;
 
-    std::vector<std::vector<float>> Xcours = {{1}, {2}};
-    std::vector<float> Ycours = {2, 3};
+    std::vector<std::vector<float>> Xcours = { {1}, {2} };
+    std::vector<float> Ycours = { 2, 3 };
 
     LinearModel modeleCasCours(1, 0.01f);
 
     modeleCasCours.train(Xcours, Ycours, 1000);
+    std::cout << std::endl;
+    std::cout << "Entrainement avec : " << std::endl;
+    std::cout << "Xcours = { {1}, {2} }" << std::endl;
+    std::cout << "Ycours = { 2, 3 }" << std::endl;
 
     std::cout << std::endl;
     std::cout << "Weights : " << model.getWeights()[0] << std::endl;
@@ -99,33 +113,75 @@ int main()
 
     std::cout << std::endl;
     std::cout << "x = 1.5 -> prediction = " << modeleCasCours.predict({1.5f}) << " (y ~= 2.5)" << std::endl;
+
     std::cout << std::endl;
+    std::cout << "OK" << std::endl;
 
     //on va tester avec le cas de test pour la regression non linéaire simple 2D vu en cours
-    std::vector<std::vector<float>> XnonLineaire = {{1}, {2}, {3}};
-    std::vector<float> YnonLineaire = {2, 3, 2.5};
+    std::cout << std::endl;
+    std::cout << "Non lineaire simple 2D : " << std::endl;
+
+    std::vector<std::vector<float>> XnonLineaire = { {1}, {2}, {3} };
+    std::vector<float> YnonLineaire = { 2, 3, 2.5 };
 
     LinearModel modeleNonLinear(1, 0.01f);
 
     modeleNonLinear.train(XnonLineaire, YnonLineaire, 1000);
-
     std::cout << std::endl;
-    std::cout << "Non lineaire simple 2D : " << std::endl;
+    std::cout << "Entrainement avec : " << std::endl;
+    std::cout << "XnonLineaire = { {1}, {2}, {3} }" << std::endl;
+    std::cout << "YnonLineaire = { 2, 3, 2.5 }" << std::endl;
 
     std::cout << std::endl;
     std::cout << "Weights : " << modeleNonLinear.getWeights()[0] << std::endl;
     std::cout << "Bias : " << modeleNonLinear.getBias() << std::endl;
 
     std::cout << std::endl;
-    for (auto& x : XnonLineaire)
+    for(auto& x : XnonLineaire)
     {
         std::cout << "x = " << x[0] 
                   << " -> prediction = " << modeleNonLinear.predict(x)
                   << " (y = " << YnonLineaire[&x - &XnonLineaire[0]] << ")" << std::endl;
     }
-    std::cout << std::endl;
     //le modèle linéaire fait toujours une droite, donc il ne pourra pas passer exactement par y = 2, 3, 2.5
     //on pourra apprendre ce pattern non linéaire à un PMC
+    //la relation n’est pas une droite (YnonLineaire monte puis redescend), le modèle linéaire ne peut pas bien représenter la courbe, donc il "échoue" légèrement
+
+    std::cout << std::endl;
+    std::cout << "Moyen : le modele lineaire ne peut pas parfaitement ajuster les donnees, parce que la relation n est plus exactement une droite" << std::endl;
+    std::cout << "(Il a trouve la meilleure approximation lineaire qui minimise l erreur)" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Lineaire simple 3D : " << std::endl;
+
+    std::vector<std::vector<float>> X3D = { {1, 1}, {2, 2}, {3, 1} };
+    std::vector<float> Y3D = { 2, 3, 2.5 };
+
+    LinearModel modele3D(2, 0.01f);
+
+    modele3D.train(X3D, Y3D, 1000);
+    std::cout << std::endl;
+    std::cout << "Entrainement avec : " << std::endl;
+    std::cout << "X3D = { {1, 1}, {2, 2}, {3, 1} }" << std::endl;
+    std::cout << "Y3D = { 2, 3, 2.5 }" << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Weights : " << modele3D.getWeights()[0] << ", "
+              << modele3D.getWeights()[1] << std::endl;
+    std::cout << "Bias : " << modele3D.getBias() << std::endl;
+
+    std::cout << std::endl;
+    for(size_t i = 0 ; i < X3D.size() ; ++i)
+    {
+        float pred = modele3D.predict(X3D[i]);
+        std::cout << "x = (" << X3D[i][0] << ", " << X3D[i][1]
+                  << ") -> prediction = " << pred
+                  << " (y = " << Y3D[i] << ")" << std::endl;
+    }
+
+    std::cout << std::endl;
+    std::cout << "OK" << std::endl;
+    std::cout << std::endl;
 
     return 0;
 }
