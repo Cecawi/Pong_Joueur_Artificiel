@@ -59,22 +59,49 @@ int main()
     //entraînement du modèle (1000 "fois")
     model.train(X, y, 1000);
     
+    
+
+    //affichage des tests
+    std::cout << std::endl;
+    std::cout << "Test pour y = 2x + 1 : " << std::endl;
+
     //affichage des poids et du biais
+    std::cout << std::endl;
     std::cout << "Weights : " << model.getWeights()[0] << std::endl;
     std::cout << "Bias : " << model.getBias() << std::endl;
 
-    //affichage des tests
-    std::cout << "y = 2x + 1" << std::endl;
+    std::cout << std::endl;
     size_t i = 0;
     for (auto& x : X)
     {
-        std::cout << "x = " << x[0] << " -> predict = " << model.predict(x) << " (y = " << y[i] << ")" << std::endl;
+        std::cout << "x = " << x[0] << " -> prediction = " << model.predict(x) << " (y = " << y[i] << ")" << std::endl;
         i++;
     }
 
     //test de prédiction
     std::vector<float> Xtest = {5.0f};
-    std::cout << "TEST PERSO : pour x = 5" << " -> predict = " << model.predict(Xtest) << " (NORMALEMENT : y = 11)" << std::endl;
+    std::cout << std::endl;
+    std::cout << "L'information que pour x = 5, y = 11 n'ayant pas ete donnee, on va tester la prediction : " << std::endl;
+    std::cout << "x = 5" << " -> prediction = " << model.predict(Xtest) << " (y = 11)" << std::endl;
+    
+    //on va tester avec le cas de test pour la regression linéaire simple 2D vu en cours
+    LinearModel modeleCasCours(1, 0.01f);
+
+    std::vector<std::vector<float>> Xcours = {{1}, {2}};
+    std::vector<float> Ycours = {2, 3};
+
+    modeleCasCours.train(Xcours, Ycours, 1000);
+
+    std::cout << std::endl;
+    std::cout << "Lineaire simple 2D : " << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "Weights : " << model.getWeights()[0] << std::endl;
+    std::cout << "Bias : " << model.getBias() << std::endl;
+
+    std::cout << std::endl;
+    std::cout << "x = 1.5 -> prediction = " << modeleCasCours.predict({1.5f}) << " (y ~= 2.5)" << std::endl;
+    std::cout << std::endl;
     
     return 0;
 }

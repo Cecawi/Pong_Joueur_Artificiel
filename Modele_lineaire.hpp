@@ -6,7 +6,7 @@ class LinearModel
 {
     private:
         std::vector<float> weights;//vecteur des poids
-        float bias;//biais b
+        float bias;//biais
         float learningRate;//taux d'apprentissage
 
     public:
