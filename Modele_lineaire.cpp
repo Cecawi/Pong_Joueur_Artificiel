@@ -1,5 +1,5 @@
 #include "Modele_lineaire.hpp"
-#include <cmath>
+//#include <cmath>
 #include <iostream>
 #include <vector>
 
@@ -45,6 +45,34 @@ float LinearModel::predict(const std::vector<float>& x)
         sum += weights[i] * x[i];
     }
     return sum;
+}
+
+extern "C"
+{
+    __declspec(dllexport) void trainLinearModel(float* X, float* y, int rows, int cols, int epochs, float lr, float* weights, float* bias)
+    {
+        LinearModel model(cols, lr);
+        std::vector<std::vector<float>> Xvec(rows, std::vector<float>(cols));
+        std::vector<float> yvec(rows);
+
+        for(int i = 0 ; i < rows ; i++)
+        {
+            yvec[i] = y[i];
+            for(int j = 0 ; j < cols ; j++)
+            {
+                Xvec[i][j] = X[i * cols + j];
+            }
+        }
+
+        model.train(Xvec, yvec, epochs);
+
+        auto w = model.getWeights();
+        for(int j = 0 ; j < cols ; j++)
+        {
+            weights[j] = w[j];
+        }
+        *bias = model.getBias();
+    }
 }
 
 int main()
