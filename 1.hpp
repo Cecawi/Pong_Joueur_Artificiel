@@ -18,7 +18,6 @@ public:
 };
 
 
-
 // class LinearModel {
 
 //     std::vector<float> x;
