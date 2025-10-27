@@ -69,6 +69,9 @@
 //     return 0;
 // }
 
+
+// ancien code
+
 #include <iostream>
 #include <vector>
 
@@ -80,7 +83,7 @@ private:
 
 public:
     Perceptron(int inputSize, float lr = 0.1f) {
-        weights.resize(inputSize, 0.0f); //  weights to 0 as usual
+        weights.resize(inputSize, 0.0f); //  weights 0 as usual
         bias = 0.0f;
         learningRate = lr;
     }
@@ -108,7 +111,7 @@ public:
     void printWeights() {
         std::cout << "Weights: ";
         for (float w : weights) std::cout << w << " ";
-        std::cout << "| Bias: " << bias << "\n";
+        std::cout << "| Bias:::: " << bias << "\n";
     }
 };
 
@@ -119,7 +122,7 @@ int main() {
     };
     std::vector<int> Y = {0,0,0,1,0,1}; // AND-like pattern
 
-    // Split: training 4 points, testing 2 points
+    // Le split training 4 points, testing 2 points
     std::vector<std::vector<float>> X_train = {X[0], X[1], X[2], X[3]};
     std::vector<int> Y_train = {Y[0], Y[1], Y[2], Y[3]};
     std::vector<std::vector<float>> X_test = {X[4], X[5]};
@@ -127,7 +130,7 @@ int main() {
 
     Perceptron p(2, 0.1);
 
-    // Training
+    // le training
     for (int epoch = 0; epoch < 10; ++epoch) {
         for (size_t i = 0; i < X_train.size(); ++i)
             p.train(X_train[i], Y_train[i]);
