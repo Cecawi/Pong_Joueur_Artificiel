@@ -139,8 +139,8 @@ int main()
     std::cout << "Ycours = { 2, 3 }" << std::endl;
 
     std::cout << std::endl;
-    std::cout << "Weights : " << model.getWeights()[0] << std::endl;
-    std::cout << "Bias : " << model.getBias() << std::endl;
+    std::cout << "Weights : " << modeleCasCours.getWeights()[0] << std::endl;
+    std::cout << "Bias : " << modeleCasCours.getBias() << std::endl;
 
     std::cout << std::endl;
     std::cout << "x = 1.5 -> prediction = " << modeleCasCours.predict({1.5f}) << " (y ~= 2.5)" << std::endl;
@@ -239,7 +239,7 @@ int main()
 //////////
     std::cout << std::endl;
     std::cout << "Lineaire tricky 3D : " << std::endl;
-    std::cout << "(Test pour y = a * x1 + b * x2 + c)" << std::endl;
+    std::cout << "(Test pour y = w1 * x1 + w2 * x2 + b)" << std::endl;
     std::cout << "(Ce cas est 'tricky' car x1 et x2 evoluent ensemble : le modele doit repartir correctement le poids entre eux (w1 ~ w2 ~ 0.5))" << std::endl;
     std::cout << std::endl;
 
