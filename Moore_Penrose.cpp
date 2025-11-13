@@ -4,26 +4,28 @@
 extern "C"
 {
     __declspec(dllexport)
-    void trainMoorePenrose(float* X_flat, float* y, int rows, int cols, float* outWeights)
+    void trainMoorePenrose(float* X, float* Y, int rows, int cols, float* outWeights, float* outBias)
     {
-        //conversion du tableau 1D C# en matrice Eigen
-        Eigen::MatrixXf X(rows, cols);
-        for(int i = 0 ; i < rows ; ++i)
-            {
-                for(int j = 0 ; j < cols ; ++j)
-                {
-                    X(i, j) = X_flat[i * cols + j];
-                }
-            }
+        //j'ai oublié le biais (colonne de 1)
+        //du coup je l'ajoute
+        //et je remplis X et Y sans refaire un for
 
-        Eigen::VectorXf yVec(rows);
+        //conversion du tableau 1D C# en matrice Eigen
+        Eigen::MatrixXf Xmat(rows, cols + 1);//+ 1 : colonne supplémentaire pour le biais
+        Eigen::VectorXf Yvec(rows);
+
         for(int i = 0 ; i < rows ; ++i)
+        {
+            for(int j = 0 ; j < cols ; ++j)
             {
-                yVec(i) = y[i];
+                Xmat(i, j) = X[i * cols + j];
             }
+            Xmat(i, cols) = 1.0f; //colonne de biais
+            Yvec(i) = Y[i];
+        }
 
         //calcul de la pseudo-inverse : W = (X^T X)^-1 X^T y
-        Eigen::VectorXf W = (X.transpose() * X).inverse() * X.transpose() * yVec;
+        Eigen::VectorXf W = (Xmat.transpose() * Xmat).inverse() * Xmat.transpose() * Yvec;
 
         //copie des poids dans le buffer de sortie pour Unity
         //copie les valeurs calculées par Eigen(W) dans un tableau simple (outWeights) que Unity envoie en paramètre
@@ -31,6 +33,8 @@ extern "C"
         {
             outWeights[i] = W(i);
         }
+
+        *outBias = W(cols);
     }
 
     __declspec(dllexport)
@@ -57,7 +61,7 @@ float MoorePenrose::predict(const Eigen::VectorXf& x) const
     return weights.dot(x);
 }
 
-#ifdef _DEBUG//permet de tester Moore_Penrose.cpp directement avec g++ pour vérifier les résultats
+/*#ifdef _DEBUG//permet de tester Moore_Penrose.cpp directement avec g++ pour vérifier les résultats
              //ne sera pas inclus dans la version DLL envoyée à Unity
 int main()
 {
@@ -84,4 +88,4 @@ int main()
 
     return 0;
 }
-#endif
+#endif*/
