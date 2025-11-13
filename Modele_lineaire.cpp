@@ -39,7 +39,7 @@ void LinearModel::train(const std::vector<std::vector<float>>& X,
 float LinearModel::predict(const std::vector<float>& x)
 {
     float sum = bias;//commence par le biais
-    //somme pondérée des valeurs : w1*x1 + w2*x2 + ...
+    //somme pondérée des valeurs : w1 * x1 + w2 * x2 + ...
     for(size_t i = 0 ; i < weights.size() ; ++i)
     {
         sum += weights[i] * x[i];
@@ -51,7 +51,7 @@ extern "C"
 {
     __declspec(dllexport) void trainLinearModel(float* X, float* y, int rows, int cols, int epochs, float lr, float* weights, float* bias)
     {
-        LinearModel model(cols, lr);
+        LinearModel model(cols, lr);//LinearModel::LinearModel(int inputSize, float lr)
         std::vector<std::vector<float>> Xvec(rows, std::vector<float>(cols));
         std::vector<float> yvec(rows);
 
@@ -78,7 +78,7 @@ extern "C"
 int main()
 {
 
-//////////on va tester y = 2x + 1
+//////////on va tester y = 2 x + 1
     std::cout << std::endl;
     std::cout << "Test pour y = 2x + 1 : " << std::endl;
     
