@@ -45,6 +45,12 @@ public class PontMoorePenrose : MonoBehaviour
         RunTest3D(Xt, Yt, xOffset);
         xOffset += stepOffset;
 
+//////////lineaire tricky 3D : légèrement modifié
+        float[,] Xtm = { {1,1}, {2,2.01f}, {3,3} };
+        float[] Ytm = { 1f, 2f, 3f };
+        RunTest3D(Xtm, Ytm, xOffset);
+        xOffset += stepOffset;
+
 //////////non lineaire simple 3D : XOR-like
         float[,] Xnl = { {1,0}, {0,1}, {1,1}, {0,0} };
         float[] Ynl = { 2f, 1f, -2f, -1f };
