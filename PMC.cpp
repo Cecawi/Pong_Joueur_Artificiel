@@ -1,3 +1,9 @@
+#if WIN32
+#define DLLEXPORT __declspec(dllexport)
+#else
+#define DLLEXPORT
+#endif
+
 #include "PMC.hpp"
 
 /////REGARDER LA OU Y A !!!!!/////
@@ -99,11 +105,11 @@ void PMC::propagate(const std::vector<double>& inputs, bool is_classification)
 //entraînement : rétropropagation du gradient stochastique
 void PMC::train
 (
-const std::vector<std::vector<double>>& all_samples_inputs,
-const std::vector<std::vector<double>>& all_samples_expected_outputs,
-bool is_classification,
-int num_iter,
-double alpha//pas d'apprentissage
+	const std::vector<std::vector<double>>& all_samples_inputs,
+	const std::vector<std::vector<double>>& all_samples_expected_outputs,
+	bool is_classification,
+	int num_iter,
+	double alpha//pas d'apprentissage
 )
 {
     //vérifir si même nombre d’entrées que de sorties
@@ -194,4 +200,169 @@ std::vector<double> PMC::predict(const std::vector<double>& inputs, bool is_clas
     return out;
 }
 
-//extern "C"
+extern "C"
+{
+	//neurons_per_layer : pointeur vers int[] côté Unity C#
+	//layers_count : nombre d'éléments dans neurons_per_layer car il ne l'indique pas
+	DLLEXPORT void* create_pmc(const int* neurons_per_layer, int layers_count)
+	{
+    	if(neurons_per_layer == nullptr || layers_count <= 0)
+		{
+			return nullptr;
+		}
+    	try
+		{
+	        std::vector<int> npl;
+	        npl.reserve(layers_count);
+	        for(int i = 0 ; i < layers_count ; ++i)
+			{
+				npl.push_back(neurons_per_layer[i]);
+			}
+	        PMC* net = new PMC(npl);
+			return static_cast<void*>(net);
+	    }
+		catch(...)
+		{
+	        return nullptr;
+	    }
+	}
+	
+	//libère l'objet créé par create_pmc
+	DLLEXPORT void destroy_pmc(void* handle)
+	{
+    	if(handle == nullptr)
+		{
+			return;
+		}
+    	PMC* net = static_cast<PMC*>(handle);
+    	delete net;
+	}
+	
+	//X_flat : samples * input_size
+	//Y_flat : samples * output_size
+	DLLEXPORT int train_pmc
+	(
+		void* handle,
+    	const double* X_flat,
+    	const double* Y_flat,
+    	int samples,
+    	int input_size,
+    	int output_size,
+    	bool is_classification,
+    	int num_iter,
+    	double alpha
+	)
+	{
+    	if(handle == nullptr)
+		{
+			return -1;
+		}
+    	if(samples <= 0 || input_size <= 0 || output_size <= 0)
+		{
+			return -2;
+		}
+    	if(X_flat == nullptr || Y_flat == nullptr)
+		{
+			return -3;
+		}
+		
+    	PMC* net = static_cast<PMC*>(handle);
+
+    	//reconstruire les vecteurs
+    	std::vector<std::vector<double>> all_inputs;
+    	std::vector<std::vector<double>> all_outputs;
+    	all_inputs.resize(samples);
+    	all_outputs.resize(samples);
+
+    	for(int i = 0 ; i < samples ; ++i)
+    	{
+        	all_inputs[i].resize(input_size);
+        	for(int j = 0 ; j < input_size ; ++j)
+			{
+            	all_inputs[i][j] = X_flat[i * input_size + j];
+			}
+
+        	all_outputs[i].resize(output_size);
+        	for(int j = 0 ; j < output_size ; ++j)
+			{
+            	all_outputs[i][j] = Y_flat[i * output_size + j];
+			}
+    	}
+
+    	try
+		{
+        	net->train(all_inputs, all_outputs, is_classification, num_iter, alpha);
+    	}
+		catch(...)
+		{
+        	return -4;
+    	}
+
+    	return 0;
+	}
+	
+	//input : array length = input_size
+	//out_buffer : array length >= output_size
+	DLLEXPORT int predict_pmc
+	(
+		void* handle,
+        const double* input,
+        int input_size,
+        double* out_buffer,
+        int output_size,
+        bool is_classification
+	)
+	{
+    	if(handle == nullptr)
+		{
+			return -1;
+		}
+    	if(input == nullptr || out_buffer == nullptr)
+		{
+			return -2;
+		}
+    	if(input_size <= 0 || output_size <= 0)
+		{
+			return -3;
+		}
+
+    	PMC* net = static_cast<PMC*>(handle);
+    	std::vector<double> vin(input_size);//vecteur inputs
+    	for(int i = 0 ; i < input_size ; ++i)
+		{
+			vin[i] = input[i];
+		}
+
+    	try
+		{
+        	std::vector<double> vout = net->predict(vin, is_classification);
+        	if((int)vout.size() != output_size)
+			{
+            	return -4;
+        	}
+        	for(int i = 0 ; i < output_size ; ++i)
+			{
+				out_buffer[i] = vout[i];
+			}
+    	}
+		catch(...)
+		{
+        	return -5;
+    	}
+
+    	return 0;
+	}
+
+	//get sizes
+	DLLEXPORT int get_pmc_io_sizes(void* handle, int* input_size, int* output_size)
+	{
+    	if(handle == nullptr || input_size == nullptr || output_size == nullptr)
+		{
+			return -1;
+		}
+    	PMC* net = static_cast<PMC*>(handle);
+    	*input_size = net->getInputSize();
+    	*output_size = net->getOutputSize();
+    	return 0;
+	}
+}

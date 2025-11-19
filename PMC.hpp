@@ -29,13 +29,24 @@ class PMC
         //entraînement : rétropropagation du gradient stochastique
         void train
         (
-        const std::vector<std::vector<double>>& all_samples_inputs,
-        const std::vector<std::vector<double>>& all_samples_expected_outputs,
-        bool is_classification,
-        int num_iter,
-        double alpha//pas d'apprentissage
+        	const std::vector<std::vector<double>>& all_samples_inputs,
+        	const std::vector<std::vector<double>>& all_samples_expected_outputs,
+        	bool is_classification,
+        	int num_iter,
+        	double alpha//pas d'apprentissage
         );
 
         //prédiction
         std::vector<double> predict(const std::vector<double>& inputs, bool is_classification);
+
+        //getters
+        int getInputSize() const
+        {
+            return d.empty() ? 0 : d[0];
+        }
+
+        int getOutputSize() const
+        {
+            return d.empty() ? 0 : d[L];
+        }
 };

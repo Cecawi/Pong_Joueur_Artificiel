@@ -49,6 +49,7 @@ float LinearModel::predict(const std::vector<float>& x)
 
 extern "C"
 {
+/////ajouter predict...
     __declspec(dllexport) void trainLinearModel(float* X, float* y, int rows, int cols, int epochs, float lr, float* weights, float* bias)
     {
         LinearModel model(cols, lr);//LinearModel::LinearModel(int inputSize, float lr)
