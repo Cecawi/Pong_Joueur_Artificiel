@@ -9,6 +9,9 @@ class MoorePenrose
         Eigen::VectorXf weights;//vecteur des poids (inclut le biais)
 
     public:
+
+/////CONSTRUCTEUR...
+
         //entraînement du modèle
         void train(const Eigen::MatrixXf& X, const Eigen::VectorXf& y);
 

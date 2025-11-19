@@ -2,6 +2,8 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
+//TODO : predict!!! -> UNITY (ce code  n'est pas dans proj unity (juste copie...))
+
 public class PontModeleLineaire : MonoBehaviour
 {
     [DllImport("Modele_lineaire.dll", CallingConvention = CallingConvention.Cdecl)]

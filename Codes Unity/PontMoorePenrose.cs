@@ -2,6 +2,10 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
+//TODO : predict!!! -> UNITY (ce code  n'est pas dans proj unity (juste copie...))
+//float[] xInput = { 4.0f, 1.0f }; // 1 ajouté pour le biais
+//float yPred = predictMoorePenrose(weights, xInput, xInput.Length);
+
 public class PontMoorePenrose : MonoBehaviour
 {
     [DllImport("Moore_Penrose")]

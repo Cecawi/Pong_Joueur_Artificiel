@@ -58,7 +58,7 @@ void MoorePenrose::train(const Eigen::MatrixXf& X, const Eigen::VectorXf& y)
 
 float MoorePenrose::predict(const Eigen::VectorXf& x) const
 {
-    return weights.dot(x);
+    return weights.dot(x);//produit scalaire entre vecteur des poids (biais inclut) et vecteur x
 }
 
 /*#ifdef _DEBUG//permet de tester Moore_Penrose.cpp directement avec g++ pour vérifier les résultats
