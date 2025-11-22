@@ -49,4 +49,9 @@ class PMC
         {
             return d.empty() ? 0 : d[L];
         }
+
+		double getWeight(int l, int i, int j) const//////////biais : j = 0.....
+		{
+			return W[l][i][j];
+		}
 };

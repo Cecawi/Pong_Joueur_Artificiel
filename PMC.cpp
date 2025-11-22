@@ -6,6 +6,8 @@
 
 #include "PMC.hpp"
 
+//g++ -shared -o PMC.dll PMC.cpp -O2 -static
+
 /////REGARDER LA OU Y A !!!!!/////
 
 //constructeur
@@ -76,15 +78,15 @@ void PMC::propagate(const std::vector<double>& inputs, bool is_classification)
     //propagation couche par couche
     for(size_t l = 1 ; l <= (size_t)L ; ++l)
     {
-
         //pour chaque neurone j de la couche l (en ignorant j=0 = biais)
         for(size_t j = 1 ; j <= (size_t)d[l] ; ++j)
         {
             double signal = 0.0;
+			signal += W[l][0][j];//biais : W[l][0][j]
 
             //produit somme des poids W[l][i][j] * X[l-1][i]
             //i parcourt tous les neurones (y compris le biais i=0)
-            for(size_t i = 0 ; i <= (size_t)d[l - 1] ; ++i)
+            for(size_t i = 1 ; i <= (size_t)d[l - 1] ; ++i)
             {
                 signal += W[l][i][j] * X[l - 1][i];
             }
@@ -169,11 +171,11 @@ void PMC::train
         //mise à jour des poids
         for(size_t l = 1 ; l <= (size_t)L ; ++l)
         {
-            for(size_t i = 0 ; i <= (size_t)d[l - 1] ; ++i)//0 = biais
+            for(size_t i = 0 ; i <= (size_t)d[l - 1] ; ++i)
             {
                 double Xi = X[l - 1][i];
 
-                for(size_t j = 1 ; j <= (size_t)d[l] ; ++j)
+                for(size_t j = 0 ; j <= (size_t)d[l] ; ++j)//met aussi à jour les biais
                 {
                     W[l][i][j] -= alpha * Xi * deltas[l][j];
                 }
@@ -248,7 +250,7 @@ extern "C"
     	int samples,
     	int input_size,
     	int output_size,
-    	bool is_classification,
+    	int is_classification,
     	int num_iter,
     	double alpha
 	)
@@ -267,6 +269,7 @@ extern "C"
 		}
 		
     	PMC* net = static_cast<PMC*>(handle);
+		bool classify = (is_classification != 0);
 
     	//reconstruire les vecteurs
     	std::vector<std::vector<double>> all_inputs;
@@ -291,7 +294,7 @@ extern "C"
 
     	try
 		{
-        	net->train(all_inputs, all_outputs, is_classification, num_iter, alpha);
+        	net->train(all_inputs, all_outputs, classify, num_iter, alpha);
     	}
 		catch(...)
 		{
@@ -310,7 +313,7 @@ extern "C"
         int input_size,
         double* out_buffer,
         int output_size,
-        bool is_classification
+        int is_classification
 	)
 	{
     	if(handle == nullptr)
@@ -328,6 +331,8 @@ extern "C"
 
     	PMC* net = static_cast<PMC*>(handle);
     	std::vector<double> vin(input_size);//vecteur inputs
+		bool classify = (is_classification != 0);
+		
     	for(int i = 0 ; i < input_size ; ++i)
 		{
 			vin[i] = input[i];
@@ -335,7 +340,7 @@ extern "C"
 
     	try
 		{
-        	std::vector<double> vout = net->predict(vin, is_classification);
+        	std::vector<double> vout = net->predict(vin, classify);
         	if((int)vout.size() != output_size)
 			{
             	return -4;
@@ -364,5 +369,21 @@ extern "C"
     	*input_size = net->getInputSize();
     	*output_size = net->getOutputSize();
     	return 0;
+	}
+
+	DLLEXPORT double get_pmc_weights(void* handle, int l, int i, int j)
+	{
+		if (!handle) return NAN;
+    PMC* net = static_cast<PMC*>(handle);
+
+    // vérif bornes defensives
+    //int L = net->getInputSize() ? /*dummy*/0 : 0; // on ne peut pas accéder à d ici ; utilise try/catch
+    try {
+        // accès sécurisé (vérifie les tailles via les vectors)
+        // on utilise exceptions si out of range (ou mieux: ajouter get methods pour dims)
+        return net->getWeight(l, i, j);
+    } catch(...) {
+        return NAN;
+    }
 	}
 }
