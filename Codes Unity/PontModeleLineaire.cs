@@ -56,7 +56,7 @@ public class PontModeleLineaire : MonoBehaviour
         int cols = 1;
         float[] w = new float[cols];
         float b = 0f;
-        float yOffset = 15f;
+        float yOffset = 45f;
 
         trainLinearModel(Xdata, yData, rows, cols, epochs, lr, w, ref b);
         Debug.Log($"2D Test : Poids appris : {w[0]}, biais : {b}");
@@ -87,7 +87,7 @@ public class PontModeleLineaire : MonoBehaviour
         int cols = Xdata.GetLength(1);
         float[] w = new float[cols];
         float b = 0f;
-        float yOffset = 15f;
+        float yOffset = 45f;
 
         //conversion pour la DLL si necessaire
         float[] Xflat = new float[rows*cols];

@@ -43,11 +43,11 @@ public class PontMoorePenrose : MonoBehaviour
         RunTest3D(X3D, Y3D, xOffset);
         xOffset += stepOffset;
 
-//////////lineaire tricky 3D : x1 et x2 evoluent ensemble
+/*//////////lineaire tricky 3D : x1 et x2 evoluent ensemble
         float[,] Xt = { {1,1}, {2,2}, {3,3} };
         float[] Yt = { 1f, 2f, 3f };
         RunTest3D(Xt, Yt, xOffset);
-        xOffset += stepOffset;
+        xOffset += stepOffset;*/
 
 //////////lineaire tricky 3D : légèrement modifié
         float[,] Xtm = { {1,1}, {2,2.01f}, {3,3} };
@@ -69,6 +69,8 @@ public class PontMoorePenrose : MonoBehaviour
         float[] w = new float[cols];
         float b = 0f;
 
+        float yOffset = 30f;
+
         trainMoorePenrose(Xdata, yData, rows, cols, w, ref b);
         Debug.Log($"2D Test => w = {w[0]}, b = {b}");
 
@@ -76,7 +78,7 @@ public class PontMoorePenrose : MonoBehaviour
         for (int i = 0; i < rows; i++)
         {
             var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            sphere.transform.position = new Vector3(Xdata[i] + xOffset, yData[i], 0);
+            sphere.transform.position = new Vector3(Xdata[i] + xOffset, yData[i] + yOffset, 0);
             sphere.transform.localScale = Vector3.one * 0.2f;
             sphere.GetComponent<Renderer>().material.color = Color.blue;
         }
@@ -85,8 +87,8 @@ public class PontMoorePenrose : MonoBehaviour
         GameObject lineObj = new GameObject("RegressionLine1D");
         var line = lineObj.AddComponent<LineRenderer>();
         line.positionCount = 2;
-        line.SetPosition(0, new Vector3(0 + xOffset, b, 0));
-        line.SetPosition(1, new Vector3(5 + xOffset, w[0] * 5 + b, 0));
+        line.SetPosition(0, new Vector3(0 + xOffset, b + yOffset, 0));
+        line.SetPosition(1, new Vector3(5 + xOffset, w[0] * 5 + b + yOffset, 0));
         line.startWidth = line.endWidth = 0.05f;
         line.material = new Material(Shader.Find("Sprites/Default"));
         line.startColor = line.endColor = Color.red;
@@ -99,6 +101,8 @@ public class PontMoorePenrose : MonoBehaviour
 
         float[] w = new float[cols];
         float b = 0f;
+
+        float yOffset = 30f;
 
         float[] Xflat = new float[rows * cols];
         for (int i = 0; i < rows; i++)
@@ -115,7 +119,7 @@ public class PontMoorePenrose : MonoBehaviour
             float x1 = Xdata[i, 0];
             float x2 = (cols > 1 ? Xdata[i, 1] : 0f);
             float y = yData[i];
-            sphere.transform.position = new Vector3(x1 + xOffset, y, x2);
+            sphere.transform.position = new Vector3(x1 + xOffset, y + yOffset, x2);
             sphere.transform.localScale = Vector3.one * 0.2f;
             sphere.GetComponent<Renderer>().material.color = Color.blue;
         }
@@ -132,19 +136,19 @@ public class PontMoorePenrose : MonoBehaviour
 
         if (cols == 1)
         {
-            vertices[0] = new Vector3(0 + xOffset, b, 0);
-            vertices[1] = new Vector3(size + xOffset, w[0] * size + b, 0);
-            vertices[2] = new Vector3(0 + xOffset, b, 0.01f);
-            vertices[3] = new Vector3(size + xOffset, w[0] * size + b, 0.01f);
+            vertices[0] = new Vector3(0 + xOffset, b + yOffset, 0);
+            vertices[1] = new Vector3(size + xOffset, w[0] * size + b + yOffset, 0);
+            vertices[2] = new Vector3(0 + xOffset, b + yOffset, 0.01f);
+            vertices[3] = new Vector3(size + xOffset, w[0] * size + b + yOffset, 0.01f);
         }
         else
         {
             float w1 = w[0];
             float w2 = w[1];
-            vertices[0] = new Vector3(0 + xOffset, b, 0);
-            vertices[1] = new Vector3(size + xOffset, w1 * size + b, 0);
-            vertices[2] = new Vector3(0 + xOffset, w2 * size + b, size);
-            vertices[3] = new Vector3(size + xOffset, w1 * size + w2 * size + b, size);
+            vertices[0] = new Vector3(0 + xOffset, b + yOffset, 0);
+            vertices[1] = new Vector3(size + xOffset, w1 * size + b + yOffset, 0);
+            vertices[2] = new Vector3(0 + xOffset, w2 * size + b + yOffset, size);
+            vertices[3] = new Vector3(size + xOffset, w1 * size + w2 * size + b + yOffset, size);
         }
 
         mesh.vertices = vertices;
