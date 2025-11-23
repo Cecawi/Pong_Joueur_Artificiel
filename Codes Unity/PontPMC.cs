@@ -494,6 +494,15 @@ public class PontPMC : MonoBehaviour
                         (affichage <= 6) ? donneesAleaAPredire1 : donneesAleaAPredire2, BesoinDePred, sortieParPoint, affichage
                     );
                 }
+                else if(affichage == 2 || affichage == 8)
+                {
+                    train_pmc(ptrPmc, X_flat, Y_flat, nbrPoints, 2, sortieParPoint, 1, 1000, 0.01);
+                    Afficher
+                    (
+                        ptrPmc, X_flat, Y_flat, PosX + 6f, PosY, TailleAxesRepere,
+                        (affichage <= 6) ? donneesAleaAPredire1 : donneesAleaAPredire2, BesoinDePred, sortieParPoint, affichage
+                    );
+                }
                 else
                 {
                     int iterations = (affichage == 3 || affichage == 9) ? 100000 : 10000;
