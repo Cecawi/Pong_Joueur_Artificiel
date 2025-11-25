@@ -2,9 +2,28 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-//TODO : Multi Cross
+//vérifier couches cachées XOR : 3 -> 2 car on a augmenté le nombre d'epoch (ou sinon, faudra l'augmenter)
+
+//TODO (ok) : Multi Cross
+//TODO (ok) : dans moore penrose : si plusieurs réponses possibles : (perturber un des points) ajouter bruit... MAIS DANS MoorePenrose.cpp... DANS LA LIB
+//TODO : courbes d'apprentissage (erreurs, over/underfitting...)
+//TODO : dataset (+ joueur enemie en entrée pas (en sortie?))
+//TODO : plus de points a prédire et/ou autre chose que que des points + ajouter au cas XOR...
+//pour le dataset, il faudra un assez grand pour avoir une partie pour entrainer et une partie pour tester : 2 courbes pour comparer (over/underfitting...)
 //ajouter si lineaire ou non (ne pas tracer droite si courbe...)
 //nbrAPred enlever regession3D?... (pas utilisé)
+
+//RBF : 
+//on projette nos données dans l'espace gaussiennes
+//sauf que beaucoup... (je saurais pas trop expliquer pourquoi)
+//donc on va  élire des ‘représentants’ avec : 
+//algo lloyd : maj centroides, maj clusters,maj centroides, maj clusters...
+
+//SVM : support vector machine : c'est pas noté (bonus (il en parle "pour clore le sujet") mais je crois qu'on peux essayer si on a le tps :'))
+//en francais : machine support vecteur ou separateur vaste marge (haha)
+//solveur quadratique : on peut utiliser OSQP
+//alpha : vecteur : contribution à la marge
+//tous alpha : 0 sauf ceux qui contribuent à la définition de la marge
 
 public class PontPMC : MonoBehaviour
 {
@@ -215,6 +234,93 @@ public class PontPMC : MonoBehaviour
             ref posX, posY, tailleAxesRepere, decalageX, decalageY
         );
 
+        Debug.Log("MULTI CROSS");
+
+        double[] xMultiCross = new double[2000];
+        double[] yMultiCross = new double[3000];
+
+        compteur = 0;
+
+        for(int i = 0 ; i < 1000 ; i++)
+        {
+            double px = rnd.NextDouble() * 2.0 - 1.0;
+            double py = rnd.NextDouble() * 2.0 - 1.0;
+
+            double modX = Math.Abs(px % 0.5);
+            double modY = Math.Abs(py % 0.5);
+
+            bool c1 = modX <= 0.25 && modY > 0.25;//classe bleue
+            bool c2 = modX > 0.25 && modY <= 0.25;//classe rouge
+            bool c3 = !c1 && !c2;//classe verte
+
+            double[] ytmp;
+
+            if(c1)
+            {
+                ytmp = new double[] { 1, -1, -1 };
+            }
+            else if(c2)
+            {
+                ytmp = new double[] { -1, 1, -1 };
+            }
+            else
+            {
+                ytmp = new double[] { -1, -1, 1 };
+            }
+
+            xMultiCross[2 * compteur] = px;
+            xMultiCross[2 * compteur + 1] = py;
+
+            yMultiCross[3 * compteur] = ytmp[0];
+            yMultiCross[3 * compteur + 1] = ytmp[1];
+            yMultiCross[3 * compteur + 2] = ytmp[2];
+
+            compteur++;
+        }
+
+        double[] xFinalCross = new double[2 * compteur];
+        double[] yFinalCross = new double[3 * compteur];
+        Array.Copy(xMultiCross, xFinalCross, 2 * compteur);
+        Array.Copy(yMultiCross, yFinalCross, 3 * compteur);
+
+        nbrXAPredire = 0;
+        tailleAxesRepere = 2f;
+
+        int[] npcMultiCross1 = new int[] { 2, 10, 10, 3 };
+        int tailleNpcMultiCross = 4;
+
+        TesteMultiCross
+        (
+            npcMultiCross1, tailleNpcMultiCross, xFinalCross, yFinalCross,
+            nbrXAPredire, false, -1f, 1f, -1f, 1f,
+            ref posX, posY, tailleAxesRepere, decalageX, decalageY
+        );
+        
+        posY += decalageY;
+
+        int[] npcMultiCross2 = new int[] { 2, 15, 15, 3 };
+
+        TesteMultiCross
+        (
+            npcMultiCross2, tailleNpcMultiCross, xFinalCross, yFinalCross,
+            nbrXAPredire, false, -1f, 1f, -1f, 1f,
+            ref posX, posY, tailleAxesRepere, decalageX, decalageY
+        );
+        
+        posY += decalageY;
+
+        int[] npcMultiCross3 = new int[] { 2, 20, 20, 3 };
+
+        TesteMultiCross
+        (
+            npcMultiCross3, tailleNpcMultiCross, xFinalCross, yFinalCross,
+            nbrXAPredire, false, -1f, 1f, -1f, 1f,
+            ref posX, posY, tailleAxesRepere, decalageX, decalageY
+        );
+        
+        posX += decalageX;
+        posY -= decalageY - decalageY;
+
         Debug.Log("REGRESSION");
         Debug.Log("LINEAIRE SIMPLE 2D");
 
@@ -243,7 +349,9 @@ public class PontPMC : MonoBehaviour
         double[] X = { 1, 2, 3 };
         double[] Y = { 2, 3, 2.5 };
 
-        int[] npcNonLineaire = new int[] { 1, 75, 1 };
+        //TODO : retester : (75 et changer proprement le nombre d'itérations)
+        //int[] npcNonLineaire = new int[] { 1, 75, 1 };
+        int[] npcNonLineaire = new int[] { 1, 3, 1 };
         int tailleNpcNonLineaire = 3;
 
         nbrXAPredire = 50;//points aléatoires à prédire
@@ -529,6 +637,70 @@ public class PontPMC : MonoBehaviour
         PosX += DecalageX;
     }
 
+    void TesteMultiCross
+    (
+        int[] Npc, int TailleNpc, double[] DoneesX, double[] DoneesY,
+        int NbrXAPred, bool BesoinDePred, float Xg, float Xd, float Yg, float Yd,
+        ref float PosX, float PosY, float TailleAxesRepere, float DecalageX, float DecalageY
+    )
+    {
+        double[] X_flat = new double[DoneesX.Length];
+        Array.Copy(DoneesX, X_flat, DoneesX.Length);
+
+        int nbrPoints = DoneesX.Length / 2;
+        int sortieParPoint = DoneesY.Length / nbrPoints;
+
+        double[] Y_flat = new double[nbrPoints * sortieParPoint];
+        for(int i = 0 ; i < nbrPoints ; i++)
+        {
+            for(int j = 0 ; j < sortieParPoint ; j++)
+            {
+                Y_flat[i * sortieParPoint + j] = DoneesY[i * sortieParPoint + j];
+            }
+        }
+
+        Vector2[] donneesAleaAPredire1 = GenerePtsAlea(NbrXAPred, Xg, Xd, Yg, Yd);//pas besoin
+
+        for(int affichage = 1 ; affichage <= 3 ; affichage++)
+        {
+            IntPtr ptrPmc = create_pmc(Npc, TailleNpc);
+            try
+            {
+                if(affichage == 1)
+                {
+                    train_pmc(ptrPmc, X_flat, Y_flat, nbrPoints, 2, sortieParPoint, 1, 100000, 0.01);
+                    Afficher
+                    (
+                        ptrPmc, X_flat, Y_flat, PosX, PosY, TailleAxesRepere,
+                        donneesAleaAPredire1, BesoinDePred, sortieParPoint, affichage
+                    );
+                }
+                else if(affichage == 2)
+                {
+                    train_pmc(ptrPmc, X_flat, Y_flat, nbrPoints, 2, sortieParPoint, 1, 1000000, 0.01);
+                    Afficher
+                    (
+                        ptrPmc, X_flat, Y_flat, PosX + 6f, PosY, TailleAxesRepere,
+                        donneesAleaAPredire1, BesoinDePred, sortieParPoint, affichage
+                    );
+                }
+                else
+                {
+                    train_pmc(ptrPmc, X_flat, Y_flat, nbrPoints, 2, sortieParPoint, 1, 10000000, 0.01);
+                    Afficher
+                    (
+                        ptrPmc, X_flat, Y_flat, PosX + 12f, PosY, TailleAxesRepere,
+                        donneesAleaAPredire1, BesoinDePred, sortieParPoint, affichage
+                    );
+                }
+            }
+            finally
+            {
+                destroy_pmc(ptrPmc);
+            }
+        }
+    }
+
     Vector2[] GenerePtsAlea(int NbrXAPred, float Xg, float Xd, float Yg, float Yd)
     {
         Vector2[] pts = new Vector2[NbrXAPred];
@@ -719,8 +891,9 @@ public class PontPMC : MonoBehaviour
         IntPtr ptrPmc = create_pmc(Npc, TailleNpc);
         try
         {
+            //TODO : changer proprement le nombre d'itérations (1000000 : "homogene")
             //entraînement simple
-            train_pmc(ptrPmc, X_flat, Y_flat, DoneesY.Length, 1, 1, 0, 1000, 0.01);
+            train_pmc(ptrPmc, X_flat, Y_flat, DoneesY.Length, 1, 1, 0, 1000000, 0.01);
             AfficherRegression(ptrPmc, X_flat, Y_flat, PosX, PosY, TailleAxesRepere, donneesAleaAPredire, Xg, Xd, FautTracerDroite);
         }
         finally

@@ -1,6 +1,8 @@
 #include "Moore_Penrose.hpp"
 #include <iostream>
 
+//g++ -I "C:/Users/yecel/Downloads/eigen-5.0.0/eigen-5.0.0" -shared -o Moore_Penrose.dll Moore_Penrose.cpp
+
 extern "C"
 {
     __declspec(dllexport)
@@ -23,6 +25,19 @@ extern "C"
             Xmat(i, cols) = 1.0f; //colonne de biais
             Yvec(i) = Y[i];
         }
+
+		bool needUpdate = MoorePenrose::needUntrick(Xmat, rows, cols);
+
+		if(needUpdate)
+		{
+			for(int i = 0 ; i < rows ; ++i)
+			{
+    			for(int j = 0 ; j < cols ; ++j)
+    			{
+        			X[i * cols + j] = Xmat(i, j);
+    			}
+			}
+		}
 
         //calcul de la pseudo-inverse : W = (X^T X)^-1 X^T y
         Eigen::VectorXf W = (Xmat.transpose() * Xmat).inverse() * Xmat.transpose() * Yvec;
@@ -61,31 +76,25 @@ float MoorePenrose::predict(const Eigen::VectorXf& x) const
     return weights.dot(x);//produit scalaire entre vecteur des poids (biais inclut) et vecteur x
 }
 
-/*#ifdef _DEBUG//permet de tester Moore_Penrose.cpp directement avec g++ pour vérifier les résultats
-             //ne sera pas inclus dans la version DLL envoyée à Unity
-int main()
+
+//détecte s'il y a colinéarité et ajoute du bruit si besoin
+bool MoorePenrose::needUntrick(Eigen::MatrixXf& Xmat, int rows, int cols)
 {
-    std::cout << "Test pour y = 2x + 1 : " << std::endl;
+    if(rows < 3)
+	{
+		return false;
+	}
+    
+    //vérifier si les points sont colinéaires
+    Eigen::MatrixXf XtX = Xmat.block(0, 0, rows, cols).transpose() * Xmat.block(0, 0, rows, cols);
+    float det = XtX.determinant();
+    
+    if(-1e-6f < det && det < 1e-6f)//seuil de singularité
+    {
+        std::cout << "Points colinéaires détectés (det=" << det << "). Ajout de bruit" << std::endl;
+        Xmat(rows - 1, 0) += 0.01f;
+		return true;
+    }
 
-//////////y = 2x + 1
-    Eigen::MatrixXf X(3, 2);
-    X << 1, 1,
-         2, 1,
-         3, 1;
-
-    Eigen::VectorXf y(3);
-    y << 3, 5, 7;
-
-    MoorePenrose model;
-    model.train(X, y);
-
-    std::cout << "Poids : " << model.getWeights().transpose() << std::endl;
-
-    Eigen::VectorXf x_test(2);
-    x_test << 4, 1;
-
-    std::cout << "Prédiction pour x = 4 : y = " << model.predict(x_test) << std::endl;
-
-    return 0;
+	return false;
 }
-#endif*/

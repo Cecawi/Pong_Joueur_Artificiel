@@ -18,6 +18,8 @@ class MoorePenrose
         //prédiction pour un vecteur x
         float predict(const Eigen::VectorXf& x) const;
 
+		static bool needUntrick(Eigen::MatrixXf& Xmat, int rows, int cols);
+
         //getter pour les poids
         Eigen::VectorXf getWeights() const { return weights; }
 };

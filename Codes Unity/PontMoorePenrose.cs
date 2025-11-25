@@ -2,14 +2,15 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-//TODO : predict!!! -> UNITY (ce code  n'est pas dans proj unity (juste copie...))
-//float[] xInput = { 4.0f, 1.0f }; // 1 ajouté pour le biais
+//TODO : predict!!! -> UNITY (ce code n'est pas dans proj unity (juste copie...))
+//float[] xInput = { 4.0f, 1.0f }; //1 ajouté pour le biais
 //float yPred = predictMoorePenrose(weights, xInput, xInput.Length);
 
 public class PontMoorePenrose : MonoBehaviour
 {
     [DllImport("Moore_Penrose")]
-    private static extern void trainMoorePenrose(
+    private static extern void trainMoorePenrose
+    (
         float[] X, float[] Y, int rows, int cols,
         float[] outWeights, ref float outBias
     );
@@ -43,11 +44,11 @@ public class PontMoorePenrose : MonoBehaviour
         RunTest3D(X3D, Y3D, xOffset);
         xOffset += stepOffset;
 
-/*//////////lineaire tricky 3D : x1 et x2 evoluent ensemble
+//////////lineaire tricky 3D : x1 et x2 evoluent ensemble
         float[,] Xt = { {1,1}, {2,2}, {3,3} };
         float[] Yt = { 1f, 2f, 3f };
         RunTest3D(Xt, Yt, xOffset);
-        xOffset += stepOffset;*/
+        xOffset += stepOffset;
 
 //////////lineaire tricky 3D : légèrement modifié
         float[,] Xtm = { {1,1}, {2,2.01f}, {3,3} };
@@ -74,8 +75,8 @@ public class PontMoorePenrose : MonoBehaviour
         trainMoorePenrose(Xdata, yData, rows, cols, w, ref b);
         Debug.Log($"2D Test => w = {w[0]}, b = {b}");
 
-        //Points
-        for (int i = 0; i < rows; i++)
+        //points
+        for(int i = 0 ; i < rows ; i++)
         {
             var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             sphere.transform.position = new Vector3(Xdata[i] + xOffset, yData[i] + yOffset, 0);
@@ -83,7 +84,7 @@ public class PontMoorePenrose : MonoBehaviour
             sphere.GetComponent<Renderer>().material.color = Color.blue;
         }
 
-        //Droite
+        //droite
         GameObject lineObj = new GameObject("RegressionLine1D");
         var line = lineObj.AddComponent<LineRenderer>();
         line.positionCount = 2;
@@ -105,15 +106,31 @@ public class PontMoorePenrose : MonoBehaviour
         float yOffset = 30f;
 
         float[] Xflat = new float[rows * cols];
-        for (int i = 0; i < rows; i++)
-            for (int j = 0; j < cols; j++)
+        for(int i = 0 ; i < rows ; i++)
+        {
+            for(int j = 0 ; j < cols ; j++)
+            {
                 Xflat[i * cols + j] = Xdata[i, j];
+            }
+        }
 
         trainMoorePenrose(Xflat, yData, rows, cols, w, ref b);
         Debug.Log($"3D Test => w = {string.Join(", ", w)}, b = {b}");
 
-        //Points
-        for (int i = 0; i < rows; i++)
+        /*
+        TODO : à refaire car incorrect
+        //recopie des valeurs modifiées par untrick
+        for(int i = 0 ; i < rows ; i++)
+        {
+            for(int j = 0 ; j < cols ; j++)
+            {
+                Xdata[i, j] = Xflat[i * cols + j];
+            }
+        }
+        */
+
+        //points
+        for(int i = 0 ; i < rows ; i++)
         {
             var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             float x1 = Xdata[i, 0];
@@ -124,7 +141,7 @@ public class PontMoorePenrose : MonoBehaviour
             sphere.GetComponent<Renderer>().material.color = Color.blue;
         }
 
-        //Plan
+        //plan
         GameObject planeObj = new GameObject("RegressionPlane");
         var mesh = new Mesh();
         planeObj.AddComponent<MeshFilter>().mesh = mesh;
@@ -134,7 +151,7 @@ public class PontMoorePenrose : MonoBehaviour
         Vector3[] vertices = new Vector3[4];
         float size = 5f;
 
-        if (cols == 1)
+        if(cols == 1)
         {
             vertices[0] = new Vector3(0 + xOffset, b + yOffset, 0);
             vertices[1] = new Vector3(size + xOffset, w[0] * size + b + yOffset, 0);
