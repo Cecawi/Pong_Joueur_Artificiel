@@ -1,6 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using System.IO;
+using System.Collections.Generic;
+using System.Globalization;
 
 //TODO : predict!!! -> UNITY (ce code n'est pas dans proj unity (juste copie...))
 //float[] xInput = { 4.0f, 1.0f }; //1 ajouté pour le biais
@@ -60,6 +63,10 @@ public class PontMoorePenrose : MonoBehaviour
         float[,] Xnl = { {1,0}, {0,1}, {1,1}, {0,0} };
         float[] Ynl = { 2f, 1f, -2f, -1f };
         RunTest3D(Xnl, Ynl, xOffset);
+        xOffset += stepOffset + stepOffset;
+
+//////////pong
+        RunPongTest(xOffset);
     }
 
     void RunTest2D(float[] Xdata, float[] yData, float xOffset)
@@ -73,7 +80,7 @@ public class PontMoorePenrose : MonoBehaviour
         float yOffset = 30f;
 
         trainMoorePenrose(Xdata, yData, rows, cols, w, ref b);
-        Debug.Log($"2D Test => w = {w[0]}, b = {b}");
+        Debug.Log($"2D Test : w = {w[0]}, b = {b}");
 
         //points
         for(int i = 0 ; i < rows ; i++)
@@ -115,7 +122,7 @@ public class PontMoorePenrose : MonoBehaviour
         }
 
         trainMoorePenrose(Xflat, yData, rows, cols, w, ref b);
-        Debug.Log($"3D Test => w = {string.Join(", ", w)}, b = {b}");
+        Debug.Log($"3D Test : w = {string.Join(", ", w)}, b = {b}");
 
         /*
         TODO : à refaire car incorrect
@@ -171,5 +178,145 @@ public class PontMoorePenrose : MonoBehaviour
         mesh.vertices = vertices;
         mesh.triangles = new int[] { 0, 2, 1, 2, 3, 1 };
         mesh.RecalculateNormals();
+    }
+
+    void RunPongTest(float xOffset)
+    {
+        string filePath = @"C:\Users\yecel\Desktop\ESGI - 4A\T1\Machine Learning\Pong_Joueur_Artificiel\pong_data_test_1.csv";
+        
+        if (!File.Exists(filePath))
+        {
+            Debug.LogError("Le dataset du pong n'a pas été trouvé à l'emplacement suivant : " + filePath);
+            return;
+        }
+
+        List<float[]> inputsList = new List<float[]>();
+        List<float> outputsList = new List<float>();
+
+        string[] lines = File.ReadAllLines(filePath);
+        
+        foreach(string line in lines)
+        {
+            if(string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            string[] parts = line.Split(',');
+            if(parts.Length < 8)
+            {
+                continue;
+            }
+
+            //entrées/inputs : indices 0, 1, 2, 3, 4, 5, 7
+            float[] input = new float[7];
+            input[0] = float.Parse(parts[0], CultureInfo.InvariantCulture);//ball x
+            input[1] = float.Parse(parts[1], CultureInfo.InvariantCulture);//ball y
+            input[2] = float.Parse(parts[2], CultureInfo.InvariantCulture);//ball vitesse x
+            input[3] = float.Parse(parts[3], CultureInfo.InvariantCulture);//ball vitesse y
+            input[4] = float.Parse(parts[4], CultureInfo.InvariantCulture);//player y
+            input[5] = float.Parse(parts[5], CultureInfo.InvariantCulture);//enemy y
+            input[6] = float.Parse(parts[7], CultureInfo.InvariantCulture);//enemy move (8eme donnée d'indice 7)
+
+            //sortie/output : indice 6
+            float output = float.Parse(parts[6], CultureInfo.InvariantCulture);
+
+            inputsList.Add(input);
+            outputsList.Add(output);
+        }
+
+        int rows = inputsList.Count;
+        int cols = 7;
+        float[] Xflat = new float[rows * cols];
+        float[] Y = outputsList.ToArray();
+
+        for(int i = 0 ; i < rows ; i++)
+        {
+            for(int j = 0 ; j < cols ; j++)
+            {
+                Xflat[i * cols + j] = inputsList[i][j];
+            }
+        }
+
+        float[] w = new float[cols];
+        float b = 0f;
+
+        trainMoorePenrose(Xflat, Y, rows, cols, w, ref b);
+
+        Debug.Log($"Pong test : w = {string.Join(", ", w)}, b = {b}");
+
+        //visualisation
+        float yOffset = 30f;
+        float scale = 10f; 
+
+        //visualisation 1 (ce que le joueur a fait)
+        //vert : Haut (1)
+        //orange : Pas bougé (0)
+        //rouge : Bas (-1)
+        for(int i = 0 ; i < rows ; i++)
+        {
+            float[] input = inputsList[i];
+            float actualOutput = outputsList[i];
+
+            float xPos = input[0] * scale + xOffset;
+            float yPos = input[1] * scale + yOffset;
+            
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.transform.position = new Vector3(xPos, yPos, 0);
+            sphere.transform.localScale = Vector3.one * 0.2f;
+
+            if(actualOutput > 0.5f)//1
+            {
+                sphere.GetComponent<Renderer>().material.color = Color.green;
+            }
+            else if(actualOutput < -0.5f)//-1
+            {
+                sphere.GetComponent<Renderer>().material.color = Color.red;
+            }
+            else//0
+            {
+                sphere.transform.localScale = Vector3.one * 0.1f;
+                sphere.GetComponent<Renderer>().material.color = Color.orange;
+            }
+        }
+
+        //visualisation 2 (ce qui est prédit)
+        //bleu : Haut (1)
+        //jaune : Pas bougé (0)
+        //magenta : Bas (-1)
+        float predOffset = 20f;
+
+        for(int i = 0 ; i < rows ; i++)
+        {
+            float[] input = inputsList[i];
+            
+            float prediction = 0f;
+            for(int j=0; j<cols; j++)
+            {
+                prediction += input[j] * w[j];
+            }
+            prediction += b;
+
+            float xPos = input[0] * scale + xOffset + predOffset;
+            float yPos = input[1] * scale + yOffset;
+
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.transform.position = new Vector3(xPos, yPos, 0);
+            sphere.transform.localScale = Vector3.one * 0.2f;
+
+            if(prediction > 0.33f)//haut
+            {
+                sphere.GetComponent<Renderer>().material.color = Color.blue;
+            }
+            else if(prediction < -0.33f)//bas
+            {
+                sphere.GetComponent<Renderer>().material.color = Color.magenta;
+            }
+            else//pas bougé
+            {
+                sphere.transform.localScale = Vector3.one * 0.1f;
+                sphere.GetComponent<Renderer>().material.color = Color.yellow;
+            }
+        }
     }
 }
