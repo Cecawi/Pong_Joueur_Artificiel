@@ -1,6 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using System.IO;
+using System.Collections.Generic;
+using System.Globalization;
 
 //vérifier couches cachées XOR : 3 -> 2 car on a augmenté le nombre d'epoch (ou sinon, faudra l'augmenter)
 
@@ -557,6 +560,9 @@ public class PontPMC : MonoBehaviour
         }
 
         posX += decalageX;
+
+        Debug.Log("PONG");
+        RunPongTest(posX, decalageX);
     }
 
     void TestsClassification
@@ -1028,6 +1034,146 @@ public class PontPMC : MonoBehaviour
         finally
         {
             destroy_pmc(ptrPmc);
+        }
+
+        PosX += DecalageX;
+    }
+
+    public void RunPongTest(float PosX, float DecalageX)
+    {
+        string filePath = @"C:\Users\yecel\Desktop\ESGI - 4A\T1\Machine Learning\Pong_Joueur_Artificiel\pong_data_test_1.csv";
+        
+        if(!File.Exists(filePath))
+        {
+            Debug.LogError("Le dataset du pong n'a pas été trouvé à l'emplacement suivant : " + filePath);
+            return;
+        }
+
+        List<double[]> inputsList = new List<double[]>();
+        List<double> outputsList = new List<double>();
+
+        string[] lines = File.ReadAllLines(filePath);
+        
+        foreach(string line in lines)
+        {
+            if(string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            string[] parts = line.Split(',');
+            if(parts.Length < 8)
+            {
+                continue;
+            }
+
+            //entrées/inputs : indices 0, 1, 2, 3, 4, 5, 7
+            double[] input = new double[7];
+            input[0] = double.Parse(parts[0], CultureInfo.InvariantCulture); //ball x
+            input[1] = double.Parse(parts[1], CultureInfo.InvariantCulture); //ball y
+            input[2] = double.Parse(parts[2], CultureInfo.InvariantCulture); //ball vitesse x
+            input[3] = double.Parse(parts[3], CultureInfo.InvariantCulture); //ball vitesse y
+            input[4] = double.Parse(parts[4], CultureInfo.InvariantCulture); //player y
+            input[5] = double.Parse(parts[5], CultureInfo.InvariantCulture); //enemy y
+            input[6] = double.Parse(parts[7], CultureInfo.InvariantCulture); //enemy move (8ème donnée d'indice 7)
+
+            //sortie/output : indice 6
+            double output = double.Parse(parts[6], CultureInfo.InvariantCulture);
+
+            inputsList.Add(input);
+            outputsList.Add(output);
+        }
+
+        int rows = inputsList.Count;
+        int cols = 7;
+        double[] Xflat = new double[rows * cols];
+        double[] Y = outputsList.ToArray();
+
+        for(int i = 0 ; i < rows ; i++)
+        {
+            for(int j = 0 ; j < cols ; j++)
+            {
+                Xflat[i * cols + j] = inputsList[i][j];
+            }
+        }
+
+        int[] npcNonLineaire3D = new int[] { 7, 1 };
+        int tailleNpcNonLineaire3D = 2;
+
+        IntPtr ptrPmc = create_pmc(npcNonLineaire3D, tailleNpcNonLineaire3D);
+
+        train_pmc(ptrPmc, Xflat, Y, rows, cols, 1, 1, 1000, 0.01);
+
+        //visualisation
+        float scale = 10f; 
+        float offsetX = PosX; //position de base pour cette visualisation
+
+        //visualisation 1 (ce que le joueur a fait)
+        //vert : Haut (1)
+        //orange : Pas bougé (0)
+        //rouge : Bas (-1)
+        for(int i = 0; i < rows; i++)
+        {
+            double[] input = inputsList[i];
+            double actualOutput = outputsList[i];
+
+            float xPos = (float)input[0] * scale + offsetX;
+            float yPos = (float)input[1] * scale;
+            
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.transform.position = new Vector3(xPos, yPos, 0);
+            sphere.transform.localScale = Vector3.one * 0.2f;
+
+            if(actualOutput > 0.5f)//1
+            {
+                sphere.GetComponent<Renderer>().material.color = Color.green;
+            }
+            else if(actualOutput < -0.5f)//-1
+            {
+                sphere.GetComponent<Renderer>().material.color = Color.red;
+            }
+            else//0
+            {
+                sphere.transform.localScale = Vector3.one * 0.1f;
+                sphere.GetComponent<Renderer>().material.color = new Color(1f, 0.5f, 0f);//orange
+            }
+        }
+
+        //visualisation 2 (ce qui est prédit)
+        //bleu : Haut (1)
+        //jaune : Pas bougé (0)
+        //magenta : Bas (-1)
+        float offsetX2 = offsetX + DecalageX;//décalage pour la deuxième visualisation
+
+        for(int i = 0 ; i < rows ; i++)
+        {
+            double[] input = inputsList[i];
+            
+            //prédiction avec le PMC
+            double[] output_buffer = new double[1];
+            predict_pmc(ptrPmc, input, cols, output_buffer, 1, 1);
+            double prediction = output_buffer[0];
+
+            float xPos = (float)input[0] * scale + offsetX2;
+            float yPos = (float)input[1] * scale;
+
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.transform.position = new Vector3(xPos, yPos, 0);
+            sphere.transform.localScale = Vector3.one * 0.2f;
+
+            if(prediction > 0.33f)//haut
+            {
+                sphere.GetComponent<Renderer>().material.color = Color.blue;
+            }
+            else if(prediction < -0.33f)//bas
+            {
+                sphere.GetComponent<Renderer>().material.color = Color.magenta;
+            }
+            else//pas bougé
+            {
+                sphere.transform.localScale = Vector3.one * 0.1f;
+                sphere.GetComponent<Renderer>().material.color = Color.yellow;
+            }
         }
 
         PosX += DecalageX;
