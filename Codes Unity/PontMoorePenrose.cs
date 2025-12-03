@@ -5,17 +5,21 @@ using System.IO;
 using System.Collections.Generic;
 using System.Globalization;
 
-//TODO : predict!!! -> UNITY (ce code n'est pas dans proj unity (juste copie...))
-//float[] xInput = { 4.0f, 1.0f }; //1 ajouté pour le biais
-//float yPred = predictMoorePenrose(weights, xInput, xInput.Length);
-
 public class PontMoorePenrose : MonoBehaviour
 {
+    // Retourne : 0 si succès, -1 si pointeurs null, -2 si dimensions invalides, 
+    // -3 si pas assez d'échantillons, -4 si erreur d'entraînement
     [DllImport("Moore_Penrose")]
-    private static extern void trainMoorePenrose
+    private static extern int trainMoorePenrose
     (
         float[] X, float[] Y, int rows, int cols,
         float[] outWeights, ref float outBias
+    );
+
+    [DllImport("Moore_Penrose")]
+    private static extern float predictMoorePenrose
+    (
+        float[] weights, float bias, float[] x, int size
     );
 
     void Start()
@@ -79,7 +83,13 @@ public class PontMoorePenrose : MonoBehaviour
 
         float yOffset = 30f;
 
-        trainMoorePenrose(Xdata, yData, rows, cols, w, ref b);
+        int result = trainMoorePenrose(Xdata, yData, rows, cols, w, ref b);
+        if(result != 0)
+        {
+            Debug.LogError($"Erreur lors de l'entraînement 2D : code {result}");
+            return;
+        }
+
         Debug.Log($"2D Test : w = {w[0]}, b = {b}");
 
         //points
@@ -121,7 +131,13 @@ public class PontMoorePenrose : MonoBehaviour
             }
         }
 
-        trainMoorePenrose(Xflat, yData, rows, cols, w, ref b);
+        int result = trainMoorePenrose(Xflat, yData, rows, cols, w, ref b);
+        if(result != 0)
+        {
+            Debug.LogError($"Erreur lors de l'entraînement 3D : code {result}");
+            return;
+        }
+
         Debug.Log($"3D Test : w = {string.Join(", ", w)}, b = {b}");
 
         /*
@@ -241,7 +257,12 @@ public class PontMoorePenrose : MonoBehaviour
         float[] w = new float[cols];
         float b = 0f;
 
-        trainMoorePenrose(Xflat, Y, rows, cols, w, ref b);
+        int result = trainMoorePenrose(Xflat, Y, rows, cols, w, ref b);
+        if(result != 0)
+        {
+            Debug.LogError($"Erreur lors de l'entraînement Pong : code {result}");
+            return;
+        }
 
         Debug.Log($"Pong test : w = {string.Join(", ", w)}, b = {b}");
 

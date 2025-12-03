@@ -23,5 +23,8 @@ class MoorePenrose
         bool needUntrick(Eigen::MatrixXf& Xmat, int rows, int cols)
 
         //récupère les poids appris (biais inclus en dernière position)
-        Eigen::VectorXf getWeights() const { return weights; }
+        Eigen::VectorXf getWeights() const
+        {
+            return weights;
+        }
 };
