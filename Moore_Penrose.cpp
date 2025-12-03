@@ -41,8 +41,9 @@ extern "C"
                 Yvec(i) = Y[i];
             }
 
+            MoorePenrose model;
             //détection et correction de la colinéarité
-            bool needUpdate = MoorePenrose::needUntrick(Xmat, rows, cols);
+            bool needUpdate = model.needUntrick(Xmat, rows, cols);
 
             if(needUpdate)
             {
@@ -54,8 +55,7 @@ extern "C"
                     }
                 }
             }
-
-            MoorePenrose model;
+            
             model.train(Xmat, Yvec);
             Eigen::VectorXf W = model.getWeights();
 

@@ -20,7 +20,7 @@ class MoorePenrose
         float predict(const Eigen::VectorXf& x) const;
         
         //détecte s'il y a colinéarité et ajoute du bruit si besoin
-        bool needUntrick(Eigen::MatrixXf& Xmat, int rows, int cols)
+        bool needUntrick(Eigen::MatrixXf& Xmat, int rows, int cols);
 
         //récupère les poids appris (biais inclus en dernière position)
         Eigen::VectorXf getWeights() const
