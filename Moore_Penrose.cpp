@@ -55,9 +55,8 @@ extern "C"
                 }
             }
 
-            MoorePenrose model;
-            model.train(Xmat, Yvec);
-            Eigen::VectorXf W = model.getWeights();
+            //calcul de la pseudo-inverse : W = (X^T X)^-1 X^T y
+            Eigen::VectorXf W = (Xmat.transpose() * Xmat).inverse() * Xmat.transpose() * Yvec;
 
             //copie des poids dans le buffer de sortie pour Unity
             //copie les valeurs calculées par Eigen(W) dans un tableau simple (outWeights) que Unity envoie en paramètre
@@ -84,27 +83,13 @@ extern "C"
             std::cerr << "Erreur : paramètres invalides pour predict" << std::endl;
             return 0.0f;
         }
-        
-        //création du vecteur de poids (avec le biais)
-        Eigen::VectorXf W(size + 1);
+
+        float result = bias;//commencer avec le biais
         for(int i = 0 ; i < size ; ++i)
         {
-            W(i) = weights[i];
+            result += weights[i] * x[i];
         }
-        W(size) = bias;//biais en dernière position
-
-        //création du vecteur d'entrée (avec 1.0 pour le biais)
-        Eigen::VectorXf inputVec(size + 1);
-        for(int i = 0 ; i < size ; ++i)
-        {
-            inputVec(i) = x[i];
-        }
-        inputVec(size) = 1.0f;//1.0 pour le biais
-
-        //utilisation de la classe MoorePenrose via setWeights et predict
-        MoorePenrose model;
-        model.setWeights(W);
-        return model.predict(inputVec);
+        return result;
     }
 }
 

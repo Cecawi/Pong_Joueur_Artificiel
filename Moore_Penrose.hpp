@@ -27,10 +27,4 @@ class MoorePenrose
         {
             return weights;
         }
-
-        //assigne les poids (biais inclus en dernière position)
-        void setWeights(const Eigen::VectorXf& w)
-        {
-            weights = w;
-        }
 };

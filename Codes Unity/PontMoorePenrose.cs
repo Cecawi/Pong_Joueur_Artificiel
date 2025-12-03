@@ -105,15 +105,8 @@ public class PontMoorePenrose : MonoBehaviour
         GameObject lineObj = new GameObject("RegressionLine1D");
         var line = lineObj.AddComponent<LineRenderer>();
         line.positionCount = 2;
-
-        float[] xPred0 = { 0f };
-        float yPred0 = predictMoorePenrose(w, b, xPred0, 1);
-        line.SetPosition(0, new Vector3(0 + xOffset, yPred0 + yOffset, 0));
-
-        float[] xPred1 = { 5f };
-        float yPred1 = predictMoorePenrose(w, b, xPred1, 1);
-        line.SetPosition(1, new Vector3(5 + xOffset, yPred1 + yOffset, 0));
-        
+        line.SetPosition(0, new Vector3(0 + xOffset, b + yOffset, 0));
+        line.SetPosition(1, new Vector3(5 + xOffset, w[0] * 5 + b + yOffset, 0));
         line.startWidth = line.endWidth = 0.05f;
         line.material = new Material(Shader.Find("Sprites/Default"));
         line.startColor = line.endColor = Color.red;
@@ -183,34 +176,19 @@ public class PontMoorePenrose : MonoBehaviour
 
         if(cols == 1)
         {
-            float[] xPred0 = { 0f };
-            float yPred0 = predictMoorePenrose(w, b, xPred0, 1);
-            vertices[0] = new Vector3(0 + xOffset, yPred0 + yOffset, 0);
-
-            float[] xPred1 = { size };
-            float yPred1 = predictMoorePenrose(w, b, xPred1, 1);
-            vertices[1] = new Vector3(size + xOffset, yPred1 + yOffset, 0);
-
-            vertices[2] = new Vector3(0 + xOffset, yPred0 + yOffset, 0.01f);
-            vertices[3] = new Vector3(size + xOffset, yPred1 + yOffset, 0.01f);
+            vertices[0] = new Vector3(0 + xOffset, b + yOffset, 0);
+            vertices[1] = new Vector3(size + xOffset, w[0] * size + b + yOffset, 0);
+            vertices[2] = new Vector3(0 + xOffset, b + yOffset, 0.01f);
+            vertices[3] = new Vector3(size + xOffset, w[0] * size + b + yOffset, 0.01f);
         }
         else
         {
-            float[] xPred0 = { 0f, 0f };
-            float yPred0 = predictMoorePenrose(w, b, xPred0, cols);
-            vertices[0] = new Vector3(0 + xOffset, yPred0 + yOffset, 0);
-
-            float[] xPred1 = { size, 0f };
-            float yPred1 = predictMoorePenrose(w, b, xPred1, cols);
-            vertices[1] = new Vector3(size + xOffset, yPred1 + yOffset, 0);
-
-            float[] xPred2 = { 0f, size };
-            float yPred2 = predictMoorePenrose(w, b, xPred2, cols);
-            vertices[2] = new Vector3(0 + xOffset, yPred2 + yOffset, size);
-
-            float[] xPred3 = { size, size };
-            float yPred3 = predictMoorePenrose(w, b, xPred3, cols);
-            vertices[3] = new Vector3(size + xOffset, yPred3 + yOffset, size);
+            float w1 = w[0];
+            float w2 = w[1];
+            vertices[0] = new Vector3(0 + xOffset, b + yOffset, 0);
+            vertices[1] = new Vector3(size + xOffset, w1 * size + b + yOffset, 0);
+            vertices[2] = new Vector3(0 + xOffset, w2 * size + b + yOffset, size);
+            vertices[3] = new Vector3(size + xOffset, w1 * size + w2 * size + b + yOffset, size);
         }
 
         mesh.vertices = vertices;
@@ -333,7 +311,12 @@ public class PontMoorePenrose : MonoBehaviour
         {
             float[] input = inputsList[i];
             
-            float prediction = predictMoorePenrose(w, b, input, cols);
+            float prediction = 0f;
+            for(int j=0; j<cols; j++)
+            {
+                prediction += input[j] * w[j];
+            }
+            prediction += b;
 
             float xPos = input[0] * scale + xOffset + predOffset;
             float yPos = input[1] * scale + yOffset;
