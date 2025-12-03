@@ -5,64 +5,91 @@
 
 extern "C"
 {
+    //0 si succès, -1 si pointeurs null, -2 si dimensions invalides, -3 si pas assez d'échantillons, -4 si erreur d'entraînement
     __declspec(dllexport)
-    void trainMoorePenrose(float* X, float* Y, int rows, int cols, float* outWeights, float* outBias)
+    int trainMoorePenrose(float* X, float* Y, int rows, int cols, float* outWeights, float* outBias)
     {
-        //j'ai oublié le biais (colonne de 1)
-        //du coup je l'ajoute
-        //et je remplis X et Y sans refaire un for
-
-        //conversion du tableau 1D C# en matrice Eigen
-        Eigen::MatrixXf Xmat(rows, cols + 1);//+ 1 : colonne supplémentaire pour le biais
-        Eigen::VectorXf Yvec(rows);
-
-        for(int i = 0 ; i < rows ; ++i)
+        if(!X || !Y || !outWeights || !outBias)
         {
-            for(int j = 0 ; j < cols ; ++j)
+            std::cerr << "Erreur : pointeurs null" << std::endl;
+            return -1;
+        }
+        if(rows <= 0 || cols <= 0)
+        {
+            std::cerr << "Erreur : dimensions invalides (rows = " << rows << ", cols = " << cols << ")" << std::endl;
+            return -2;
+        }
+        if(rows < cols + 1)//+1 pour le biais
+        {
+            std::cerr << "Erreur : pas assez d'échantillons (rows = " << rows << ", cols+1 = " << cols+1 << ")" << std::endl;
+            return -3;
+        }
+
+        try
+        {
+            //conversion du tableau 1D C# en matrice Eigen
+            Eigen::MatrixXf Xmat(rows, cols + 1);//+ 1 : colonne supplémentaire pour le biais
+            Eigen::VectorXf Yvec(rows);
+
+            for(int i = 0 ; i < rows ; ++i)
             {
-                Xmat(i, j) = X[i * cols + j];
+                for(int j = 0 ; j < cols ; ++j)
+                {
+                    Xmat(i, j) = X[i * cols + j];
+                }
+                Xmat(i, cols) = 1.0f;//colonne de biais
+                Yvec(i) = Y[i];
             }
-            Xmat(i, cols) = 1.0f; //colonne de biais
-            Yvec(i) = Y[i];
+
+            //détection et correction de la colinéarité
+            bool needUpdate = MoorePenrose::needUntrick(Xmat, rows, cols);
+
+            if(needUpdate)
+            {
+                for(int i = 0 ; i < rows ; ++i)
+                {
+                    for(int j = 0 ; j < cols ; ++j)
+                    {
+                        X[i * cols + j] = Xmat(i, j);
+                    }
+                }
+            }
+
+            //calcul de la pseudo-inverse : W = (X^T X)^-1 X^T y
+            Eigen::VectorXf W = (Xmat.transpose() * Xmat).inverse() * Xmat.transpose() * Yvec;
+
+            //copie des poids dans le buffer de sortie pour Unity
+            //copie les valeurs calculées par Eigen(W) dans un tableau simple (outWeights) que Unity envoie en paramètre
+            for(int i = 0 ; i < cols ; ++i)
+            {
+                outWeights[i] = W(i);
+            }
+            *outBias = W(cols);
+
+            return 0;//succès
         }
-
-		bool needUpdate = MoorePenrose::needUntrick(Xmat, rows, cols);
-
-		if(needUpdate)
-		{
-			for(int i = 0 ; i < rows ; ++i)
-			{
-    			for(int j = 0 ; j < cols ; ++j)
-    			{
-        			X[i * cols + j] = Xmat(i, j);
-    			}
-			}
-		}
-
-        //calcul de la pseudo-inverse : W = (X^T X)^-1 X^T y
-        Eigen::VectorXf W = (Xmat.transpose() * Xmat).inverse() * Xmat.transpose() * Yvec;
-
-        //copie des poids dans le buffer de sortie pour Unity
-        //copie les valeurs calculées par Eigen(W) dans un tableau simple (outWeights) que Unity envoie en paramètre
-        for(int i = 0 ; i < cols ; ++i)
+        catch(const std::exception& e)
         {
-            outWeights[i] = W(i);
+            std::cerr << "Erreur lors de l'entraînement : " << e.what() << std::endl;
+            return -4;
         }
-
-        *outBias = W(cols);
     }
 
     __declspec(dllexport)
-    float predictMoorePenrose(float* weights, float* x, int size)
+    float predictMoorePenrose(float* weights, float bias, float* x, int size)
     {
-        Eigen::VectorXf W(size);
-        Eigen::VectorXf X(size);
+        if(!weights || !x || size <= 0)
+        {
+            std::cerr << "Erreur : paramètres invalides pour predict" << std::endl;
+            return 0.0f;
+        }
+
+        float result = bias;//commencer avec le biais
         for(int i = 0 ; i < size ; ++i)
         {
-            W(i) = weights[i];
-            X(i) = x[i];
+            result += weights[i] * x[i];
         }
-        return W.dot(X);
+        return result;
     }
 }
 
@@ -76,13 +103,12 @@ float MoorePenrose::predict(const Eigen::VectorXf& x) const
     return weights.dot(x);//produit scalaire entre vecteur des poids (biais inclut) et vecteur x
 }
 
-
 //détecte s'il y a colinéarité et ajoute du bruit si besoin
 bool MoorePenrose::needUntrick(Eigen::MatrixXf& Xmat, int rows, int cols)
 {
     if(rows < 3)
 	{
-		return false;
+		return false;//pas assez de points pour détecter la colinéarité
 	}
     
     //vérifier si les points sont colinéaires
