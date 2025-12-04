@@ -1069,15 +1069,15 @@ public class PontPMC : MonoBehaviour
 
             //entrées/inputs : indices 0, 1, 2, 3, 4, 5, 7
             double[] input = new double[7];
-            input[0] = double.Parse(parts[0], CultureInfo.InvariantCulture); //ball x
-            input[1] = double.Parse(parts[1], CultureInfo.InvariantCulture); //ball y
-            input[2] = double.Parse(parts[2], CultureInfo.InvariantCulture); //ball vitesse x
-            input[3] = double.Parse(parts[3], CultureInfo.InvariantCulture); //ball vitesse y
-            input[4] = double.Parse(parts[4], CultureInfo.InvariantCulture); //player y
-            input[5] = double.Parse(parts[5], CultureInfo.InvariantCulture); //enemy y
-            input[6] = double.Parse(parts[7], CultureInfo.InvariantCulture); //enemy move (8ème donnée d'indice 7)
+            input[0] = double.Parse(parts[0], CultureInfo.InvariantCulture);//ball x
+            input[1] = double.Parse(parts[1], CultureInfo.InvariantCulture);//ball y
+            input[2] = double.Parse(parts[2], CultureInfo.InvariantCulture);//ball vitesse x
+            input[3] = double.Parse(parts[3], CultureInfo.InvariantCulture);//ball vitesse y
+            input[4] = double.Parse(parts[4], CultureInfo.InvariantCulture);//player y
+            input[5] = double.Parse(parts[5], CultureInfo.InvariantCulture);//enemy y
+            input[6] = double.Parse(parts[7], CultureInfo.InvariantCulture);//enemy move (8ème donnée d'indice 7)
 
-            //sortie/output : indice 6
+            //sortie/output : indice 6 (player move)
             double output = double.Parse(parts[6], CultureInfo.InvariantCulture);
 
             inputsList.Add(input);

@@ -38,13 +38,30 @@ public class PontPerceptronMultiClasses : MonoBehaviour
         List<int> outputsList = new List<int>();
 
         string[] lines = File.ReadAllLines(filePath);
+
+        int compteur = 0;
         
         foreach(string line in lines)
         {
-            if(string.IsNullOrWhiteSpace(line)) continue;
+            if(string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
 
             string[] parts = line.Split(',');
-            if(parts.Length < 8) continue;
+            if(parts.Length < 8)
+            {
+                continue;
+            }
+
+            if(parts[6] == "0" && compteur < 1000)
+            {
+                compteur++;
+            }
+            if(parts[6] == "0" && compteur >= 1000)
+            {
+                continue;
+            }
 
             //entrées/inputs : indices 0, 1, 2, 3, 4, 5, 7
             float[] input = new float[7];
