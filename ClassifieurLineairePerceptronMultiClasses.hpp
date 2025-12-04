@@ -37,12 +37,12 @@ class PerceptronMultiClasses
         {
             return inputSize;
         }
-    };
+};
 
-    extern "C"
-    {
-        DLLEXPORT PerceptronMultiClasses* create_perceptron_multiclasses(int inputSize, int numClasses, float lr);
-        DLLEXPORT void train_perceptron_multiclasses(PerceptronMultiClasses* model, float* X, int* Y, int rows, int cols, int epochs);
-        DLLEXPORT int predict_perceptron_multiclasses(PerceptronMultiClasses* model, float* input);
-        DLLEXPORT void destroy_perceptron_multiclasses(PerceptronMultiClasses* model);
+extern "C"
+{
+    DLLEXPORT PerceptronMultiClasses* create_perceptron_multiclasses(int inputSize, int numClasses, float lr);
+    DLLEXPORT void train_perceptron_multiclasses(PerceptronMultiClasses* model, float* X, int* Y, int rows, int cols, int epochs);
+    DLLEXPORT int predict_perceptron_multiclasses(PerceptronMultiClasses* model, float* input);
+    DLLEXPORT void destroy_perceptron_multiclasses(PerceptronMultiClasses* model);
 }

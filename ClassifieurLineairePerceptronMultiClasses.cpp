@@ -6,7 +6,7 @@
 //g++ -shared -o ClassifieurLineairePerceptronMultiClasses.dll ClassifieurLineairePerceptronMultiClasses.cpp
 
 PerceptronMultiClasses::PerceptronMultiClasses(int inputSize, int numClasses, float lr)
-    : inputSize(inputSize), numClasses(numClasses), learningRate(lr)
+   : inputSize(inputSize), numClasses(numClasses), learningRate(lr)
 {
     weights.resize(numClasses);
     bias.resize(numClasses);
