@@ -1135,7 +1135,7 @@ public class PontPMC : MonoBehaviour
             else//0
             {
                 sphere.transform.localScale = Vector3.one * 0.1f;
-                sphere.GetComponent<Renderer>().material.color = new Color(1f, 0.5f, 0f);//orange
+                sphere.GetComponent<Renderer>().material.color = Color.orange;
             }
         }
 
