@@ -1,0 +1,14 @@
+{
+	"nom": "agent_par_defaut",
+	"tailleEntree": 7,
+	"nombreClasses": 3,
+	"tauxApprentissage": 0.01,
+	"epochsEntraines": 6000,
+	"datasetsUtilises": ["pong_data_test_1.csv", "pong_data_test_2.csv", "pong_data_test_3.csv", "pong_data_test_4.csv", "pong_data_test_5.csv", "pong_data_test_6.csv"],
+	"poids": [
+		[-0.00966565, 0.0860456, 0.00340996, 0.0168659, -0.0795543, -0.0434506, 0.00308195],
+		[0.00276062, 0.000216027, -0.0106509, 0.00636195, -0.00392406, 0.0162264, 0.00389113],
+		[0.0113812, -0.11599, -0.00477322, -0.0119339, 0.0916607, 0.0396845, -0.0138647]
+	],
+	"biais": [-0.0103274, -0.0181725, 0.0116725]
+}
