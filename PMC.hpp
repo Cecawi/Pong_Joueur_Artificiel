@@ -1,6 +1,6 @@
 #pragma once
 
-/////DEMANDER POUR LES INCLUDES
+
 
 #include <vector>
 #include <cmath>//tanh
@@ -8,7 +8,7 @@
 #include <cassert>//assert
 #include <stdexcept>//runtime_error
 
-/////REGARDER LA OU Y A !!!!!/////
+
 
 class PMC
 {
@@ -16,8 +16,8 @@ class PMC
         std::vector<int> d;//liste taille des couches, d[l] : nombre de neurones dans la couche l
         int L;//L : nombre de couches cachées (la dernière est L)
         std::vector<std::vector<std::vector<double>>> W;//poids, W[l][i][j] : poids de la couche l liant le neurone i de la couche l - 1 au neurone j de la couche l
-        std::vector<std::vector<double>> X;/////activations ; OK : //X[l][j] : valeur du neurone j de la couche l
-        std::vector<std::vector<double>> deltas;/////erreurs[l][j]
+        std::vector<std::vector<double>> X;//activations ; X[l][j] : valeur du neurone j de la couche l
+        std::vector<std::vector<double>> deltas;//erreurs[l][j]
     
     public : 
         //constructeur
@@ -50,8 +50,20 @@ class PMC
             return d.empty() ? 0 : d[L];
         }
 
-		double getWeight(int l, int i, int j) const//////////biais : j = 0.....
+		double getWeight(int l, int i, int j) const
 		{
 			return W[l][i][j];
+		}
+
+		//Getters pour sauvegarde JSON
+		std::vector<std::vector<std::vector<double>>> getWeights() const
+		{
+			return W;
+		}
+
+		//Setters pour chargement JSON
+		void setWeights(const std::vector<std::vector<std::vector<double>>>& newW)
+		{
+			W = newW;
 		}
 };

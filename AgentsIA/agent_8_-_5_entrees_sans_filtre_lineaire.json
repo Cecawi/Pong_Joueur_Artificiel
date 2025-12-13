@@ -1,0 +1,15 @@
+{
+	"nom": "agent_7_-_5_entrees_sans_filtre_lineaire_tous",
+	"typeModele": "linear",
+	"tailleEntree": 5,
+	"nombreClasses": 3,
+	"tauxApprentissage": 0.01,
+	"epochsEntraines": 6000,
+	"datasetsUtilises": ["pong_data_test_1.csv", "pong_data_test_2.csv", "pong_data_test_3.csv", "pong_data_test_4.csv", "pong_data_test_5.csv", "pong_data_test_6.csv"],
+	"poids": [
+		[0.00201973, -0.0974106, -0.00275375, -0.0134696, 0.141829],
+		[0.0140072, -0.0111025, 0.0154147, -0.0109269, -0.00244898],
+		[-0.0151657, 0.0855173, -0.00419361, 0.0117142, -0.0995386]
+	],
+	"biais": [-0.0317097, -0.000145465, -0.0192244]
+}

@@ -14,13 +14,20 @@ namespace fs = std::filesystem;
 struct AgentInfo
 {
 	std::string nom;
+	std::string typeModele;//"linear" ou "pmc"
 	int tailleEntree;
 	int nombreClasses;
 	float tauxApprentissage;
 	int epochsEntraines;
 	std::vector<std::string> datasetsUtilises;
+	
+	//Linear
 	std::vector<std::vector<float>> poids;
 	std::vector<float> biais;
+
+	//PMC
+	std::vector<int> architecture;
+	std::vector<std::vector<std::vector<double>>> poidsPMC;//[layer][i][j]
 };
 
 //charge un fichier JSON d'agent

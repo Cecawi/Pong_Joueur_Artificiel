@@ -1,8 +1,10 @@
 #include "EntraineurAgent.hpp"
 #include <cstring>
 
-//g++ -o EntraineurAgent.exe EntraineurAgent.cpp ClassifieurLineairePerceptronMultiClasses.cpp; Remove-Item EntraineurAgent.o -ErrorAction SilentlyContinue
-//.\EntraineurAgent.exe --tous
+#include "PMC.hpp"
+
+//g++ -o EntraineurAgent.exe EntraineurAgent.cpp ClassifieurLineairePerceptronMultiClasses.cpp PMC.cpp; Remove-Item EntraineurAgent.o -ErrorAction SilentlyContinue
+//.\EntraineurAgent.exe --tous --modele pmc
 //.\EntraineurAgent.exe --aide
 
 std::string trim(const std::string &str)
@@ -94,6 +96,14 @@ bool chargerAgentJSON(const std::string &cheminFichier, AgentInfo &agent)
 		};
 
 	agent.nom = extraireValeurString("nom");
+	agent.typeModele = extraireValeurString("typeModele");
+	agent.typeModele = extraireValeurString("typeModele");
+	//defaut
+	if(agent.typeModele.empty())
+	{
+		agent.typeModele = "linear";
+	}
+
 	agent.tailleEntree = extraireValeurInt("tailleEntree");
 	agent.nombreClasses = extraireValeurInt("nombreClasses");
 	agent.tauxApprentissage = extraireValeurFloat("tauxApprentissage");
@@ -126,10 +136,10 @@ bool chargerAgentJSON(const std::string &cheminFichier, AgentInfo &agent)
 		}
 	}
 
-	//extraction des poids
+	//extraction des poids (LINEAIRE)
 	std::string recherchePoids = "\"poids\":";
 	size_t posPoids = contenu.find(recherchePoids);
-	if(posPoids != std::string::npos)
+	if(posPoids != std::string::npos && agent.typeModele == "linear")
 	{
 		size_t debutTableauExt = contenu.find("[", posPoids);
 		int niveau = 0;
@@ -181,10 +191,10 @@ bool chargerAgentJSON(const std::string &cheminFichier, AgentInfo &agent)
 		}
 	}
 
-	//extraction des biais
+	//extraction des biais (LINEAIRE)
 	std::string rechercheBiais = "\"biais\":";
 	size_t posBiais = contenu.find(rechercheBiais);
-	if(posBiais != std::string::npos)
+	if(posBiais != std::string::npos && agent.typeModele == "linear")
 	{
 		size_t debutTableau = contenu.find("[", posBiais);
 		size_t finTableau = contenu.find("]", debutTableau);
@@ -204,6 +214,105 @@ bool chargerAgentJSON(const std::string &cheminFichier, AgentInfo &agent)
 		}
 	}
 
+	//extraction architecture (PMC)
+	std::string rechercheArchi = "\"architecture\":";
+	size_t posArchi = contenu.find(rechercheArchi);
+	if(posArchi != std::string::npos && agent.typeModele == "pmc")
+	{
+		size_t debutTableau = contenu.find("[", posArchi);
+		size_t finTableau = contenu.find("]", debutTableau);
+		if(debutTableau != std::string::npos && finTableau != std::string::npos)
+		{
+			std::string archiStr = contenu.substr(debutTableau + 1, finTableau - debutTableau - 1);
+			std::stringstream ss(archiStr);
+			std::string valeur;
+			while(std::getline(ss, valeur, ','))
+			{
+				valeur = trim(valeur);
+				if(!valeur.empty())
+				{
+					agent.architecture.push_back(std::stoi(valeur));
+				}
+			}
+		}
+	}
+	
+	//extraction poids PMC (3D)
+	std::string recherchePoidsPMC = "\"poidsPMC\":";
+	size_t posPoidsPMC = contenu.find(recherchePoidsPMC);
+	if(posPoidsPMC != std::string::npos && agent.typeModele == "pmc")
+	{
+		size_t debutTableauExt = contenu.find("[", posPoidsPMC);
+		
+		std::vector<double> allFloats;
+		bool inNumber = false;
+		std::string currentNum;
+		
+		size_t cursor = posPoidsPMC + 11;
+		int bracketLevel = 0;
+		bool started = false;
+		
+		for( ; cursor < contenu.length() ; cursor++)
+		{
+			char c = contenu[cursor];
+			if(c == '[') 
+			{
+				bracketLevel++;
+				started = true;
+			}
+			else if(c == ']') 
+			{
+				if(inNumber)
+				{
+					allFloats.push_back(std::stod(currentNum));
+					currentNum = "";
+					inNumber = false;
+				}
+				bracketLevel--;
+				if(started && bracketLevel == 0) break;
+			}
+			else if(isdigit(c) || c == '.' || c == '-' || c == 'e' || c == 'E')
+			{
+				inNumber = true;
+				currentNum += c;
+			}
+			else if(c == ',' || c == ' ' || c == '\n' || c == '\t' || c == '\r')
+			{
+				if(inNumber)
+				{
+					allFloats.push_back(std::stod(currentNum));
+					currentNum = "";
+					inNumber = false;
+				}
+			}
+		}
+		
+		//reconstruire weights à partir de allFloats
+		if(!agent.architecture.empty())
+		{
+			agent.poidsPMC.resize(agent.architecture.size());
+			int floatIdx = 0;
+			for(size_t l = 1 ; l < agent.architecture.size() ; ++l)
+			{
+				int rows = agent.architecture[l-1] + 1;
+				int cols = agent.architecture[l] + 1;
+				
+				agent.poidsPMC[l].resize(rows);
+				for(int i = 0 ; i < rows ; ++i)
+				{
+					agent.poidsPMC[l][i].resize(cols);
+					for(int j = 0 ; j < cols ; ++j)
+					{
+						if(floatIdx < allFloats.size())
+						{
+							agent.poidsPMC[l][i][j] = allFloats[floatIdx++];
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -217,6 +326,7 @@ bool sauvegarderAgentJSON(const std::string &cheminFichier, const AgentInfo &age
 
 	fichier << "{\n";
 	fichier << "\t\"nom\": \"" << agent.nom << "\",\n";
+	fichier << "\t\"typeModele\": \"" << agent.typeModele << "\",\n";
 	fichier << "\t\"tailleEntree\": " << agent.tailleEntree << ",\n";
 	fichier << "\t\"nombreClasses\": " << agent.nombreClasses << ",\n";
 	fichier << "\t\"tauxApprentissage\": " << agent.tauxApprentissage << ",\n";
@@ -233,37 +343,73 @@ bool sauvegarderAgentJSON(const std::string &cheminFichier, const AgentInfo &age
 	}
 	fichier << "],\n";
 
-	fichier << "\t\"poids\": [\n";
-	for(size_t c = 0 ; c < agent.poids.size() ; ++c)
+	if(agent.typeModele == "linear")
 	{
-		fichier << "\t\t[";
-		for(size_t i = 0 ; i < agent.poids[c].size() ; ++i)
+		fichier << "\t\"poids\": [\n";
+		for(size_t c = 0 ; c < agent.poids.size() ; ++c)
 		{
-			fichier << agent.poids[c][i];
-			if(i < agent.poids[c].size() - 1)
+			fichier << "\t\t[";
+			for(size_t i = 0 ; i < agent.poids[c].size() ; ++i)
+			{
+				fichier << agent.poids[c][i];
+				if(i < agent.poids[c].size() - 1)
+				{
+					fichier << ", ";
+				}
+			}
+			fichier << "]";
+			if(c < agent.poids.size() - 1)
+			{
+				fichier << ",";
+			}
+			fichier << "\n";
+		}
+		fichier << "\t],\n";
+
+		fichier << "\t\"biais\": [";
+		for(size_t i = 0 ; i < agent.biais.size() ; ++i)
+		{
+			fichier << agent.biais[i];
+			if(i < agent.biais.size() - 1)
 			{
 				fichier << ", ";
 			}
 		}
-		fichier << "]";
-		if(c < agent.poids.size() - 1)
-		{
-			fichier << ",";
-		}
-		fichier << "\n";
+		fichier << "]\n";
 	}
-	fichier << "\t],\n";
-
-	fichier << "\t\"biais\": [";
-	for(size_t i = 0 ; i < agent.biais.size() ; ++i)
+	else if(agent.typeModele == "pmc")
 	{
-		fichier << agent.biais[i];
-		if(i < agent.biais.size() - 1)
+		fichier << "\t\"architecture\": [";
+		for(size_t i = 0 ; i < agent.architecture.size() ; ++i)
 		{
-			fichier << ", ";
+			fichier << agent.architecture[i];
+			if(i < agent.architecture.size() - 1)
+			{
+				fichier << ", ";
+			}
 		}
+		fichier << "],\n";
+
+		fichier << "\t\"poidsPMC\": [\n";
+		for(size_t l = 0 ; l < agent.poidsPMC.size() ; ++l)
+		{
+			fichier << "\t\t[\n";
+			for(size_t i = 0 ; i < agent.poidsPMC[l].size() ; ++i)
+			{
+				fichier << "\t\t\t[";
+				for(size_t j = 0 ; j < agent.poidsPMC[l][i].size() ; ++j)
+				{
+					fichier << agent.poidsPMC[l][i][j];
+					if(j < agent.poidsPMC[l][i].size() - 1) fichier << ", ";
+				}
+				fichier << "]";
+				if(i < agent.poidsPMC[l].size() - 1) fichier << ",\n";
+			}
+			fichier << "\n\t\t]";
+			if(l < agent.poidsPMC.size() - 1) fichier << ",\n";
+		}
+		fichier << "\n\t]\n";
 	}
-	fichier << "]\n";
 
 	fichier << "}\n";
 	fichier.close();
@@ -431,6 +577,8 @@ bool chargerDatasetCSV
 		}
 		*/
 
+
+		/*
 		//version 4 : avec filtre x neutres
 		{
 			//sortie : indice 6 (playerMove), valeurs directes du CSV : -1 (haut), 0 (neutre), 1 (bas)
@@ -472,8 +620,8 @@ bool chargerDatasetCSV
 			X.push_back(input);
 			Y.push_back(classIndex);
 		}
+		*/
 
-		/*
 		//version 5 : sans filtre
 		{
 			//sortie : indice 6 (playerMove), valeurs directes du CSV : -1 (haut), 0 (neutre), 1 (bas)
@@ -505,7 +653,6 @@ bool chargerDatasetCSV
 			X.push_back(input);
 			Y.push_back(classIndex);
 		}
-		*/
 	}
 
 	fichier.close();
@@ -551,16 +698,18 @@ void afficherAide()
 {
 	std::cout << "Usage: EntraineurAgent.exe [options]\n\n";
 	std::cout << "Options:\n";
-	std::cout << "  --premier       Entrainer avec le 1er fichier de DatasetsAEntrainer\n";
+	std::cout << "  --premier       Entrainer avec le 1er fichier de DatasetsAUtiliser\n";
 	std::cout << "  --nombre N      Entrainer avec les N premiers fichiers\n";
 	std::cout << "  --tous          Entrainer avec tous les fichiers disponibles\n";
 	std::cout << "  --epochs N      Nombre d'epochs (defaut: 1000)\n";
 	std::cout << "  --agent NOM     Nom de l'agent (defaut: agent)\n";
+	std::cout << "  --modele TYPE   Type de modele (linear ou pmc, defaut: linear)\n";
+	std::cout << "  --keep          Ne pas deplacer les fichiers apres entrainement\n";
 	std::cout << "  --reset         Supprimer l'agent et le recreer depuis zero\n";
 	std::cout << "  --aide          Afficher cette aide\n\n";
 	std::cout << "Exemples:\n";
 	std::cout << "  EntraineurAgent.exe --premier\n";
-	std::cout << "  EntraineurAgent.exe --nombre 3 --epochs 500\n";
+	std::cout << "  EntraineurAgent.exe --nombre 2 --epochs 500 --modele pmc\n";
 	std::cout << "  EntraineurAgent.exe --tous --agent mon_agent\n";
 	std::cout << "  EntraineurAgent.exe --reset\n";
 	std::cout << "  EntraineurAgent.exe --reset --agent mon_agent\n";
@@ -575,6 +724,7 @@ int main(int argc, char *argv[])
 	bool premier = false;
 	bool tous = false;
 	bool reset = false;
+	bool keep = false;
 
 	for(int i = 1 ; i < argc ; ++i)
 	{
@@ -597,6 +747,10 @@ int main(int argc, char *argv[])
 		{
 			reset = true;
 		}
+		else if(arg == "--keep")
+		{
+			keep = true;
+		}
 		else if(arg == "--nombre" && i + 1 < argc)
 		{
 			nombreFichiers = std::stoi(argv[++i]);
@@ -608,6 +762,20 @@ int main(int argc, char *argv[])
 		else if(arg == "--agent" && i + 1 < argc)
 		{
 			nomAgent = argv[++i];
+		}
+		else if(arg == "--modele" && i + 1 < argc)
+		{
+			//TODO : gérer ça proprement
+		}
+	}
+	
+	std::string typeModeleForce = "";
+	for(int i = 1 ; i < argc ; ++i)
+	{
+		std::string arg = argv[i];
+		if(arg == "--modele" && i + 1 < argc)
+		{
+			typeModeleForce = argv[++i];
 		}
 	}
 
@@ -622,7 +790,7 @@ int main(int argc, char *argv[])
 	//chemins
 	std::string dossierBase = ".";
 	std::string dossierAgents = dossierBase + "/AgentsIA";
-	std::string dossierAEntrainer = dossierBase + "/DatasetsAEntrainer";
+	std::string dossierAEntrainer = dossierBase + "/DatasetsAUtiliser";
 	std::string dossierUtilises = dossierBase + "/DatasetsUtilises";
 	std::string cheminAgent = dossierAgents + "/" + nomAgent + ".json";
 
@@ -697,9 +865,14 @@ int main(int argc, char *argv[])
 
 	if(agentExiste)
 	{
-		std::cout << "Agent existant charge : " << agent.nom << std::endl;
+		std::cout << "Agent existant charge : " << agent.nom << " (" << agent.typeModele << ")" << std::endl;
 		std::cout << "Epochs precedents : " << agent.epochsEntraines << std::endl;
 		std::cout << "Datasets deja utilises : " << agent.datasetsUtilises.size() << std::endl;
+		
+		if(!typeModeleForce.empty() && typeModeleForce != agent.typeModele)
+		{
+			std::cout << "Attention: le modele force (" << typeModeleForce << ") ne correspond pas a l'agent charge (" << agent.typeModele << "). L'agent conserve son type." << std::endl;
+		}
 	}
 	else
 	{
@@ -709,28 +882,54 @@ int main(int argc, char *argv[])
 		agent.nombreClasses = 3;
 		agent.tauxApprentissage = 0.01f;
 		agent.epochsEntraines = 0;
+		agent.typeModele = "linear";
+		
+		if(!typeModeleForce.empty())
+		{
+			agent.typeModele = typeModeleForce;
+		}
+		
+		//init architecture PMC si besoin
+		if(agent.typeModele == "pmc")
+		{
+			//exemple : 5 entrées -> 10 cachés -> 10 cachés -> 3 sorties
+			agent.architecture = {5, 10, 10, 3};
+		}
 	}
 
-	//créer le modèle
-	PerceptronMultiClasses *model = create_perceptron_multiclasses(agent.tailleEntree, agent.nombreClasses, agent.tauxApprentissage);
+	//pointeurs génériques (void* pour simplification si on voulait tout abstraire, mais ici on va faire des if)
+	PerceptronMultiClasses *modelLinear = nullptr;
+	PMC *modelPMC = nullptr;
 
-	//charger les poids existants si l'agent existe
-	if(agentExiste && !agent.poids.empty())
+	if(agent.typeModele == "linear")
 	{
-		std::cout << "Chargement des poids existants..." << std::endl;
-
-		//aplatir les poids
-		std::vector<float> poidsFlat;
-		for(const auto &classe : agent.poids)
+		modelLinear = create_perceptron_multiclasses(agent.tailleEntree, agent.nombreClasses, agent.tauxApprentissage);
+		//charger les poids existants si l'agent existe
+		if(agentExiste && !agent.poids.empty())
 		{
-			for(float p : classe)
+			std::cout << "Chargement des poids existants (Linear)..." << std::endl;
+			std::vector<float> poidsFlat;
+			for(const auto &classe : agent.poids)
 			{
-				poidsFlat.push_back(p);
+				for(float p : classe)
+				{
+					poidsFlat.push_back(p);
+				}
 			}
+			set_weights(modelLinear, poidsFlat.data());
+			set_bias(modelLinear, agent.biais.data());
 		}
-
-		set_weights(model, poidsFlat.data());
-		set_bias(model, agent.biais.data());
+	}
+	else if(agent.typeModele == "pmc")
+	{
+		modelPMC = new PMC(agent.architecture);
+		//charger poids PMC
+		if(agentExiste && !agent.poidsPMC.empty())
+		{
+			std::cout << "Chargement des poids existants (PMC)..." << std::endl;
+			//hack : on utilise le vecteur 3D stocké dans agent.poidsPMC pour set les poids manuellement
+			modelPMC->setWeights(agent.poidsPMC);
+		}
 	}
 
 	//entraîner avec chaque fichier
@@ -767,7 +966,32 @@ int main(int argc, char *argv[])
 		}
 
 		//entraîner
-		train_perceptron_multiclasses(model, Xflat.data(), Y.data(), rows, cols, epochs);
+		//entraîner
+		if(modelLinear)
+		{
+			train_perceptron_multiclasses(modelLinear, Xflat.data(), Y.data(), rows, cols, epochs);
+		}
+		else if(modelPMC)
+		{
+			//PMC attend double
+			std::vector<std::vector<double>> inputsD(rows, std::vector<double>(cols));
+			std::vector<std::vector<double>> outputsD(rows, std::vector<double>(agent.nombreClasses));
+			
+			for(int i = 0 ; i < rows ; ++i)
+			{
+				for(int j = 0 ; j < cols ; ++j)
+				{
+					inputsD[i][j] = (double)X[i][j];
+				}
+				//one-hot encoding pour Y
+				for(int c = 0 ; c < agent.nombreClasses ; ++c)
+				{
+					 outputsD[i][c] = (c == Y[i]) ? 1.0 : -1.0; 
+				}
+			}
+			
+			modelPMC->train(inputsD, outputsD, true, epochs, agent.tauxApprentissage);
+		}
 
 		std::cout << "Entrainement termine (" << epochs << " epochs)" << std::endl;
 
@@ -777,32 +1001,50 @@ int main(int argc, char *argv[])
 
 		//déplacer le fichier vers DatasetsUtilises
 		std::string destination = dossierUtilises + "/" + nomFichier;
-		if(deplacerFichier(cheminComplet, destination))
+		if(!keep)
 		{
-			std::cout << "Fichier deplace vers DatasetsUtilises" << std::endl;
+			if(deplacerFichier(cheminComplet, destination))
+			{
+				std::cout << "Fichier deplace vers DatasetsUtilises" << std::endl;
+			}
+		}
+		else
+		{
+			std::cout << "Fichier conserve (--keep)" << std::endl;
 		}
 	}
 
-	//récupérer les poids et biais du modèle
-	int totalPoids = agent.tailleEntree * agent.nombreClasses;
-	std::vector<float> poidsFlat(totalPoids);
-	std::vector<float> biais(agent.nombreClasses);
-
-	get_weights(model, poidsFlat.data());
-	get_bias(model, biais.data());
-
-	//reconstruire les poids en 2D
-	agent.poids.resize(agent.nombreClasses);
-	int idx = 0;
-	for(int c = 0 ; c < agent.nombreClasses ; ++c)
+	//récupérer les poids
+	if(modelLinear)
 	{
-		agent.poids[c].resize(agent.tailleEntree);
-		for(int i = 0 ; i < agent.tailleEntree ; ++i)
+		int totalPoids = agent.tailleEntree * agent.nombreClasses;
+		std::vector<float> poidsFlat(totalPoids);
+		std::vector<float> biais(agent.nombreClasses);
+
+		get_weights(modelLinear, poidsFlat.data());
+		get_bias(modelLinear, biais.data());
+
+		//reconstruire les poids en 2D
+		agent.poids.resize(agent.nombreClasses);
+		int idx = 0;
+		for(int c = 0 ; c < agent.nombreClasses ; ++c)
 		{
-			agent.poids[c][i] = poidsFlat[idx++];
+			agent.poids[c].resize(agent.tailleEntree);
+			for(int i = 0 ; i < agent.tailleEntree ; ++i)
+			{
+				agent.poids[c][i] = poidsFlat[idx++];
+			}
 		}
+		agent.biais = biais;
+		
+		destroy_perceptron_multiclasses(modelLinear);
 	}
-	agent.biais = biais;
+	else if(modelPMC)
+	{
+		//sauvegarder poids PMC
+		agent.poidsPMC = modelPMC->getWeights();//il faudra ajouter getter dans PMC
+		delete modelPMC;
+	}
 
 	//sauvegarder l'agent
 	if(sauvegarderAgentJSON(cheminAgent, agent))
@@ -817,7 +1059,7 @@ int main(int argc, char *argv[])
 	}
 
 	//nettoyer
-	destroy_perceptron_multiclasses(model);
+	//destroy handled in if/else blocks
 
 	std::cout << "\nTermine!" << std::endl;
 	return 0;
