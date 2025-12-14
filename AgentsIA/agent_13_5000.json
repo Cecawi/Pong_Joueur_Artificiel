@@ -1,0 +1,15 @@
+{
+	"nom": "agent",
+	"typeModele": "linear",
+	"tailleEntree": 5,
+	"nombreClasses": 3,
+	"tauxApprentissage": 0.01,
+	"epochsEntraines": 6000,
+	"datasetsUtilises": ["pong_data_test_1.csv", "pong_data_test_2.csv", "pong_data_test_3.csv", "pong_data_test_4.csv", "pong_data_test_5.csv", "pong_data_test_6.csv"],
+	"poids": [
+		[-0.00575027, -0.103173, -0.0152677, -0.00531762, 0.135893],
+		[0.0179649, -0.00554502, 0.0139842, -0.0154375, -0.0142042],
+		[-0.0317672, 0.0829916, -0.0112042, 0.00590937, -0.101974]
+	],
+	"biais": [-0.0277089, 0.00111914, -0.0224642]
+}

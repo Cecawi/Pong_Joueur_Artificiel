@@ -578,7 +578,7 @@ bool chargerDatasetCSV
 		*/
 
 
-		/*
+		
 		//version 4 : avec filtre x neutres
 		{
 			//sortie : indice 6 (playerMove), valeurs directes du CSV : -1 (haut), 0 (neutre), 1 (bas)
@@ -599,7 +599,7 @@ bool chargerDatasetCSV
 			}
 
 			//filtre neutres
-			if(classIndex == 1 && compteurNeutres >= 1500)
+			if(classIndex == 1 && compteurNeutres >= 4000)
 			{
 				continue;
 			}
@@ -620,7 +620,7 @@ bool chargerDatasetCSV
 			X.push_back(input);
 			Y.push_back(classIndex);
 		}
-		*/
+		/*
 
 		//version 5 : sans filtre
 		{
@@ -652,7 +652,7 @@ bool chargerDatasetCSV
 
 			X.push_back(input);
 			Y.push_back(classIndex);
-		}
+		}*/
 	}
 
 	fichier.close();
@@ -897,7 +897,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	//pointeurs génériques (void* pour simplification si on voulait tout abstraire, mais ici on va faire des if)
+	//pointeurs génériques
 	PerceptronMultiClasses *modelLinear = nullptr;
 	PMC *modelPMC = nullptr;
 
