@@ -18,8 +18,8 @@ private:
     
     // Poids de la couche de sortie : W[j][k] est le poids entre le centre j et la sortie k
     // W[j][0] est le biais si l'implémentation utilise un biais sur la sortie.
-    // Pour une sortie linéaire, on utilise généralement W[j][k] où j va de 0 à hidden_size.
-    // Ici, nous allons simplifier : W[j][k] où j = centre, k = sortie.
+    // Pour une sortie linéaire,  W[j][k] où j va de 0 à hidden_size.
+    // Ici, simplifier : W[j][k] où j = centre, k = sortie.
     std::vector<std::vector<double>> W; 
 
     // Centres des fonctions de base radiales (déterminés par K-means)
@@ -73,8 +73,7 @@ public:
     void setSigmas(const std::vector<double>& newS) { sigmas = newS; }
 };
 
-// Fonctions d'export C-style (similaires à PMC.cpp)
-extern "C"
-{
-    // [Implémentations des fonctions d'export comme create_rbf, destroy_rbf, train_rbf, predict_rbf]
-}
+// extern "C"
+// {
+//     // [Implémentations des fonctions d'export comme create_rbf, destroy_rbf, train_rbf, predict_rbf]
+// }

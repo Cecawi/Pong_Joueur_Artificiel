@@ -31,7 +31,6 @@ void RBF::initialize_centers_and_sigmas(const std::vector<std::vector<double>>& 
     int N = all_samples_inputs.size();
     if (N == 0 || hidden_size == 0) return;
 
-    // 1. Initialisation aléatoire simple des centres (prendre des échantillons aléatoires)
     centers.resize(hidden_size, std::vector<double>(input_size));
     srand(time(0)); // Utilisation de rand() comme dans PMC.cpp
     for (int j = 0; j < hidden_size; ++j)
@@ -40,12 +39,8 @@ void RBF::initialize_centers_and_sigmas(const std::vector<std::vector<double>>& 
         centers[j] = all_samples_inputs[k];
     }
 
-    // Un K-means complet impliquerait des itérations de déplacement de centres et de re-clustering.
-    // Pour rester concis et fonctionnel, nous passons directement au calcul des sigmas.
 
-    // 2. Calcul des sigmas (souvent basé sur la distance maximale entre les centres)
-    // Ici, nous utilisons une règle heuristique simple : d_max / sqrt(2*hidden_size)
-    // où d_max est la distance maximale entre les centres initiaux.
+    // d_max est la distance maximale entre les centres initiaux.
     double d_max = 0.0;
     for (int j1 = 0; j1 < hidden_size; ++j1)
     {
@@ -105,7 +100,6 @@ RBF::RBF(const std::vector<int>& sizes)
         }
     }
     
-    // Les centres et sigmas sont initialisés dans train()
 }
 
 // Entraînement : K-means puis (Pseudo-Inverse ou SGD)
@@ -199,10 +193,8 @@ std::vector<double> RBF::predict(const std::vector<double>& inputs)
     return out;
 }
 
-// Fonctions C-style pour l'export DLL
 extern "C"
 {
-    // [Les fonctions d'export seront implémentées ici, similaires à celles de PMC.cpp]
     
     DLLEXPORT void* create_rbf(const int* sizes, int layers_count)
     {

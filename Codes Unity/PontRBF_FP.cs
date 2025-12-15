@@ -3,23 +3,23 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using System.Collections.Generic;
 
-public class PontRBF : MonoBehaviour
+public class PontRBF_FP : MonoBehaviour
 {
     
-    [DllImport("RBF", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("RBF_FP", CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr create_rbf(int[] sizes, int layers_count);
 
-    [DllImport("RBF", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("RBF_FP", CallingConvention = CallingConvention.Cdecl)]
     private static extern void destroy_rbf(IntPtr handle);
 
-    [DllImport("RBF", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("RBF_FP", CallingConvention = CallingConvention.Cdecl)]
     private static extern int train_rbf
     (
         IntPtr handle, double[] X_flat, double[] Y_flat, int samples, int input_size,
         int output_size, int is_classification, int num_iter, double alpha
     );
 
-    [DllImport("RBF", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("RBF_FP", CallingConvention = CallingConvention.Cdecl)]
     private static extern int predict_rbf
     (
         IntPtr handle, double[] input, int input_size,
@@ -35,17 +35,17 @@ public class PontRBF : MonoBehaviour
         float decalageY = -6f;
         float tailleAxesRepere = 5f;
 
-        // --- Test RBF XOR (Classification Non Linéaire) ---
-        Debug.Log("RBF XOR (Classification)");
+        // --- Test RBF_FP XOR (Classification Non Linéaire) ---
+        Debug.Log("RBF_FP XOR (Classification)");
 
         double[] xXor = { 1, 0, 0, 1, 0, 0, 1, 1 }; // (1,0), (0,1), (0,0), (1,1)
         double[] yXor = { 1, 1, -1, -1 };          // Classes : 1, 1, -1, -1
 
-        // RBF : 2 entrées, 3 centres RBF cachés, 1 sortie
+        // RBF_FP : 2 entrées, 3 centres RBF_FP cachés, 1 sortie
         int[] rbfXorSizes = new int[] { 2, 3, 1 };
         int tailleRbfXor = 3; 
 
-        // RBF est vachement bon pour le XOR
+        // RBF_FP est vachement bon pour le XOR
         TestsRBFClassification(
             rbfXorSizes, tailleRbfXor, xXor, yXor,
             200, 0f, 1f, 0f, 1f,
@@ -55,8 +55,8 @@ public class PontRBF : MonoBehaviour
         posX += decalageX;
         posY = 18f; // Réinitialisation de Y pour le prochain bloc
         
-        // --- Test RBF Régression Non Linéaire (Sinusoïde simple) ---
-        Debug.Log("RBF REGRESSION NON LINEAIRE");
+        // --- Test RBF_FP Régression Non Linéaire (Sinusoïde simple) ---
+        Debug.Log("RBF_FP REGRESSION NON LINEAIRE");
 
         int N_samples = 50;
         double[] xSin = new double[N_samples];
@@ -70,7 +70,7 @@ public class PontRBF : MonoBehaviour
             ySin[i] = Math.Sin(xSin[i]) + (rnd.NextDouble() * 0.2 - 0.1); // sin(x) avec petit bruit
         }
 
-        // RBF : 1 entrée, 10 centres RBF cachés, 1 sortie
+        // RBF_FP : 1 entrée, 10 centres RBF_FP cachés, 1 sortie
         int[] rbfSinSizes = new int[] { 1, 10, 1 };
         int tailleRbfSin = 3;
 
@@ -107,13 +107,13 @@ public class PontRBF : MonoBehaviour
             {
                 int iter = iterationsList[affichage];
                 
-                // Entraînement RBF - Classification (is_classification = 1)
+                // Entraînement RBF_FP - Classification (is_classification = 1)
                 train_rbf(ptrRbf, X_flat, Y_flat, nbrPoints, RbfSizes[0], RbfSizes[RbfSizes.Length - 1], 1, iter, 0.01);
 
                 float currentPosX = PosX + affichage * 6f;
                 AfficherRBFClassification(
                     ptrRbf, X_flat, Y_flat, currentPosX, PosY, TailleAxesRepere,
-                    donneesAleaAPredire, sortieParPoint, $"RBF XOR - {iter} iter"
+                    donneesAleaAPredire, sortieParPoint, $"RBF_FP XOR - {iter} iter"
                 );
             }
             finally
@@ -145,7 +145,7 @@ public class PontRBF : MonoBehaviour
         IntPtr ptrRbf = create_rbf(RbfSizes, TailleRbf);
         try
         {
-            // Entraînement RBF - Régression (is_classification = 0)
+            // Entraînement RBF_FP - Régression (is_classification = 0)
             train_rbf(ptrRbf, X_flat, Y_flat, nbrPoints, RbfSizes[0], RbfSizes[RbfSizes.Length - 1], 0, 10000, 0.01);
             
             AfficherRBFRegression(
@@ -231,7 +231,7 @@ public class PontRBF : MonoBehaviour
         double[] predictionInputs, float Xg, float Xd, float Yg, float Yd
     )
     {
-        AfficherRepere(PosX, PosY, TailleAxesRepere, "RBF Regression 1D");
+        AfficherRepere(PosX, PosY, TailleAxesRepere, "RBF_FP Regression 1D");
 
         // Affichage des points d'entraînement en bleu
         for(int i = 0 ; i < DoneesY.Length ; i++)
